@@ -1,0 +1,60 @@
+stages:
+ - build
+ - release
+
+.build:
+  stage: build
+  tags:
+    - windows
+  when: manual
+  before_script:
+    - choco install -y visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.Tools.x86"
+    - function loadenv() { foreach($line in Get-Content $args[0]) { if($line -match "^(.*?)=(.*)$") { Set-Content "env:\$($matches[1])" $matches[2] } } };
+  script:
+    - cmd /c " `"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars32.bat`" && set > `"vs.env`" "
+    - loadenv vs.env
+    - msbuild GothicCoop.vcxproj /property:Configuration="${CONFIGURATION}" /p:PreBuildEventUseInBuild=False
+    - cp Bin/$CI_PROJECT_TITLE.dll ./
+  after_script:
+    - $env = "${GAME}_JOB_ID=$CI_JOB_ID" -replace "-", "_"
+    - Add-Content -Path job.env -Value $env
+  artifacts:
+    name: $CI_PROJECT_TITLE
+    paths:
+    - $CI_PROJECT_TITLE.dll
+    expire_in: never
+    reports:
+       dotenv: job.env
+
+build:gothic1:
+  extends: .build
+  variables:
+    GAME: gothic1
+    CONFIGURATION: "G1 MD Release"
+
+build:gothic2_notr:
+  extends: .build
+  variables:
+    GAME: gothic2_notr
+    CONFIGURATION: "G2A MD Release"
+    
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  when: manual
+  needs: [build:gothic1, build:gothic2_notr]
+  variables:
+    TAG: '0.1'
+  script:
+    - echo "Create Release $TAG"
+  release:
+    tag_name: '$TAG'
+    description: "./CHANGELOG.md"
+    assets:
+      links:
+        - name: "Gothic 1"
+          url: "$CI_PROJECT_URL/-/jobs/$gothic1_JOB_ID/artifacts/download"
+          link_type: "package"
+        - name: "Gothic 2 NoTR"
+          url: "$CI_PROJECT_URL/-/jobs/$gothic2_notr_JOB_ID/artifacts/download"
+          link_type: "package"

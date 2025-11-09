@@ -1,0 +1,54 @@
+namespace GOTHIC_ENGINE {
+    enum UpdateType
+    {
+        SYNC_POS,
+        SYNC_HEADING,
+        SYNC_ANIMATION,
+        SYNC_WEAPON_MODE,
+        INIT_NPC,
+        DESTROY_NPC,
+        SYNC_ATTACKS,
+        SYNC_ARMOR,
+        SYNC_WEAPONS,
+        SYNC_HP,
+        SYNC_TIME,
+        SYNC_HAND,
+        SYNC_MAGIC_SETUP,
+        SYNC_SPELL_CAST,
+        SYNC_REVIVED,
+        SYNC_PROTECTIONS,
+        SYNC_PLAYER_NAME,
+        PLAYER_DISCONNECT,
+        SYNC_TALENTS,
+        SYNC_BODYSTATE,
+        SYNC_OVERLAYS,
+        SYNC_DROPITEM,
+        SYNC_TAKEITEM,
+    };
+
+    struct PlayerHit
+    {
+        string npcUniqueName;
+        float damage;
+        oCNpc* npc;
+        oCNpc* attacker;
+        int isUnconscious;
+        bool isDead;
+        unsigned long damageMode;
+    };
+
+    struct SpellCast
+    {
+        oCNpc* npc;
+        oCNpc* targetNpc;
+        string npcUniqueName;
+        string targetNpcUniqueName;
+    };
+
+    class PeerData
+    {
+    public:
+        string name;
+        PeerData() {}
+    };
+}

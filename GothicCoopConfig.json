@@ -1,0 +1,11 @@
+{
+    "server":"localhost",
+    "playersDamageMultipler":100,
+    "npcsDamageMultipler":100,
+    "toggleGameLogKey":"KEY_P",
+    "toggleGameStatsKey":"KEY_O",
+    "startServerKey":"KEY_F1",
+    "startConnectionKey":"KEY_F2",
+    "reinitPlayersKey":"KEY_F3",
+    "revivePlayerKey":"KEY_F4"
+}
