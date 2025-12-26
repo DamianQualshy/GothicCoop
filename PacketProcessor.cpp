@@ -2,7 +2,11 @@ namespace GOTHIC_ENGINE {
     void ProcessCoopPacket(json e, ENetEvent packet) {
         auto id = e["id"].get<std::string>();
         auto type = e["type"].get<int>();
-        auto npcToSync = SyncNpcs.count(id.c_str()) ? SyncNpcs[id.c_str()] : NULL;
+        RemoteNpc* npcToSync = NULL;
+        auto syncIt = SyncNpcs.find(id.c_str());
+        if (syncIt != SyncNpcs.end()) {
+            npcToSync = syncIt->second;
+        }
 
         if (type == SYNC_PLAYER_NAME) {
             auto connectId = e["connectId"].get<enet_uint32>();
@@ -108,6 +112,7 @@ namespace GOTHIC_ENGINE {
             ReadyToSendJsons.enqueue(j);
 
             removeSyncedNpc(remoteNpc->name);
+            delete remoteNpc;
             packet.peer->data = NULL;
             break;
         }

@@ -6,7 +6,14 @@ namespace GOTHIC_ENGINE {
 	}
 
 	void removeSyncedNpc(string uniqueName) {
-		auto removedNpc = SyncNpcs[uniqueName];
+		auto removedIt = SyncNpcs.find(uniqueName);
+		if (removedIt == SyncNpcs.end()) {
+			return;
+		}
+		auto removedNpc = removedIt->second;
+		if (!removedNpc) {
+			return;
+		}
 		json j; 
 		j["type"] = DESTROY_NPC;
 		removedNpc->localUpdates.push_back(j);

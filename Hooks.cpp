@@ -317,12 +317,14 @@ namespace GOTHIC_ENGINE {
                             BroadcastNpcs.erase(BroadcastNpcs.find(uniqueName));
                         }
                     }
-                    if (SyncNpcs.count(uniqueName) > 0) {
-                        auto remoteNpc = SyncNpcs[uniqueName];
+                    auto syncIt = SyncNpcs.find(uniqueName);
+                    if (syncIt != SyncNpcs.end()) {
+                        auto remoteNpc = syncIt->second;
                         if (remoteNpc) {
                             remoteNpc->destroyed = true;
-                            SyncNpcs.erase(SyncNpcs.find(uniqueName));
+                            delete remoteNpc;
                         }
+                        SyncNpcs.erase(syncIt);
                     }
 
                     UniqueNameToNpcList.erase(uniqueName);

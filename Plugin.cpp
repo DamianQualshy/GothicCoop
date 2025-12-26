@@ -113,12 +113,16 @@ namespace GOTHIC_ENGINE {
             }
 
             PluginState = "UpdateSyncNpcs";
-            for (auto const& pair : SyncNpcs) {
-                auto npc = pair.second;
+            for (auto it = SyncNpcs.begin(); it != SyncNpcs.end();) {
+                auto npc = it->second;
                 npc->Update();
 
                 if (npc->destroyed) {
-                    SyncNpcs.erase(pair.first);
+                    delete npc;
+                    it = SyncNpcs.erase(it);
+                }
+                else {
+                    ++it;
                 }
             }
 
@@ -267,10 +271,13 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        SyncNpcs.clear();
-        for (auto syncPlayerNpc : syncPlayerNpcs) {
-            SyncNpcs[syncPlayerNpc.first] = syncPlayerNpc.second;
+        for (auto existingNpc : SyncNpcs) {
+            if (syncPlayerNpcs.count(existingNpc.first) == 0) {
+                delete existingNpc.second;
+            }
         }
+
+        SyncNpcs = syncPlayerNpcs;
 
         BroadcastNpcs.clear();
         UniqueNameToNpcList.clear();

@@ -29,6 +29,11 @@ namespace GOTHIC_ENGINE {
             name = playerName;
         }
 
+        ~RemoteNpc() {
+            delete lastPositionFromServer;
+            lastPositionFromServer = NULL;
+        }
+
         void Update() {
             if (destroyed) {
                 return;
@@ -50,8 +55,7 @@ namespace GOTHIC_ENGINE {
                 return;
             }
 
-            for (unsigned int i = 0; i < localUpdates.size(); i++)
-            {
+            while (!localUpdates.empty()) {
                 auto update = localUpdates.front();
                 localUpdates.erase(localUpdates.begin());
 
@@ -181,6 +185,7 @@ namespace GOTHIC_ENGINE {
                 playerNickname = nickname.c_str();
                 playerHeadVarNr = headNumber;
                 playerBodyTextVarNr = bodyNumber;
+                delete lastPositionFromServer;
                 lastPositionFromServer = new zVEC3(x, y, z);
 
                 if (IsCoopPlayer(name)) {
@@ -208,6 +213,7 @@ namespace GOTHIC_ENGINE {
                 }
             }
 
+            delete lastPositionFromServer;
             lastPositionFromServer = new zVEC3(x, y, z);
         }
 
