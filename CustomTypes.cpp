@@ -34,6 +34,7 @@ namespace GOTHIC_ENGINE {
         oCNpc* attacker;
         int isUnconscious;
         bool isDead;
+        bool isFinish;
         unsigned long damageMode;
     };
 

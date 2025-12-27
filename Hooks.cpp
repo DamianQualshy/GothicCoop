@@ -131,6 +131,7 @@ namespace GOTHIC_ENGINE {
         hit.npc = _this;
         hit.isDead = _this->IsDead();
         hit.isUnconscious = _this->IsUnconscious();
+        hit.isFinish = false;
         hit.damageMode = damdesc.enuModeDamage;
         ReadyToSyncDamages.enqueue(hit);
 
@@ -162,8 +163,9 @@ namespace GOTHIC_ENGINE {
                     hit.damage = 1;
                     hit.attacker = player;
                     hit.npc = enemy;
-                    hit.isDead = true;
-                    hit.isUnconscious = 0;
+                    hit.isDead = false;
+                    hit.isUnconscious = 1;
+                    hit.isFinish = true;
                     hit.damageMode = oETypeDamage::oEDamageType_Edge;
                     ReadyToSyncDamages.enqueue(hit);
                 }

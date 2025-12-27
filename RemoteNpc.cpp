@@ -589,6 +589,7 @@ namespace GOTHIC_ENGINE {
                 auto target = a["target"].get<std::string>();
                 auto damage = a["damage"].get<float>();
                 auto isUnconscious = a["isUnconscious"].get<int>();
+                auto isFinish = a.value("isFinish", false);
                 auto stillAlive = !a["isDead"].get<bool>();
                 auto damageMode = a["damageMode"].get<unsigned long>();
 
@@ -601,9 +602,13 @@ namespace GOTHIC_ENGINE {
                         break;
                     }
 
-                    if (isUnconscious && stillAlive) {
+                    if (isUnconscious) {
                         targetNpc->SetWeaponMode2(NPC_WEAPON_NONE);
                         targetNpc->DropUnconscious(1, npc);
+                    }
+
+                    if (isFinish) {
+                        break;
                     }
 
                     if (stillAlive) {
@@ -624,9 +629,13 @@ namespace GOTHIC_ENGINE {
                     auto targetNpc = PlayerNameToNpc[target.c_str()];
                     int health = targetNpc->GetAttribute(NPC_ATR_HITPOINTS);
 
-                    if (isUnconscious && stillAlive) {
+                    if (isUnconscious) {
                         targetNpc->SetWeaponMode2(NPC_WEAPON_NONE);
                         targetNpc->DropUnconscious(1, npc);
+                    }
+
+                    if (isFinish) {
+                        break;
                     }
 
                     if (stillAlive) {
@@ -649,7 +658,7 @@ namespace GOTHIC_ENGINE {
                     auto isTalkingWith = IsPlayerTalkingWithNpc(targetNpc);
                     static int AIV_PARTYMEMBER = GetPartyMemberID();
 
-                    if (isUnconscious && stillAlive) {
+                    if (isUnconscious) {
                         targetNpc->SetWeaponMode2(NPC_WEAPON_NONE);
 
                         if (IsCoopPlayer(npc->GetObjectName()) || npc->aiscriptvars[AIV_PARTYMEMBER] == True) {
@@ -658,6 +667,10 @@ namespace GOTHIC_ENGINE {
                         else {
                             targetNpc->DropUnconscious(1, npc);
                         }
+                    }
+
+                    if (isFinish) {
+                        continue;
                     }
 
                     if (stillAlive) {

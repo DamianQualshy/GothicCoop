@@ -540,6 +540,7 @@ namespace GOTHIC_ENGINE {
                         att["damage"] = at.damage;
                         att["isUnconscious"] = at.isUnconscious;
                         att["isDead"] = at.isDead;
+                        att["isFinish"] = at.isFinish;
                         att["damageMode"] = at.damageMode;
                         attacks.push_back(att);
                     }
