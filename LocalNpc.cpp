@@ -454,6 +454,7 @@ namespace GOTHIC_ENGINE {
                 case SYNC_BODYSTATE:
                 {
                     j["bs"] = lastBodyState;
+                    break;
                 }
                 case SYNC_OVERLAYS:
                 {
@@ -467,6 +468,7 @@ namespace GOTHIC_ENGINE {
                     }
     
                     j["overlays"] = overlays;
+                    break;
                 }
                 case SYNC_PROTECTIONS:
                 {
