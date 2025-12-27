@@ -423,7 +423,7 @@ namespace GOTHIC_ENGINE {
 
         CrashReportData report = BuildCrashReport(false);
         std::vector<std::string> last10CoreMethodCalls(report.lastCoreMethodCalls.end() - 10, report.lastCoreMethodCalls.end());
-        std::string errorMessage = string::Combine("[GothicCoop] Error (v. %i):\n", COOP_VERSION).ToChar();
+        std::string errorMessage = string::Combine("[GothicCoop] Error (v. %s):\n", COOP_VERSION).ToChar();
         std::string errorLog = "";
 
         if (PluginState.compare("") != 0) {
