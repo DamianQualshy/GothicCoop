@@ -399,6 +399,51 @@ namespace GOTHIC_ENGINE {
             }
         }
 
+        void EnsureSpellSetup(int spellInstanceId) {
+            if (!hasNpc || !hasModel || spellInstanceId <= 0) {
+                return;
+            }
+
+            oCMag_Book* book = npc->GetSpellBook();
+            if (!book) {
+                return;
+            }
+
+            auto selectedSpell = book->GetSelectedSpell();
+            if (selectedSpell) {
+                auto selectedSpellItem = book->GetSpellItem(selectedSpell);
+                if (selectedSpellItem) {
+                    int currentInstanceId = parser->GetIndex(selectedSpellItem->GetInstanceName());
+                    if (currentInstanceId == spellInstanceId) {
+                        return;
+                    }
+                }
+            }
+
+            if (selectedSpell) {
+                auto selectedSpellItem = book->GetSpellItem(selectedSpell);
+                if (selectedSpellItem) {
+                    npc->DoDropVob(selectedSpellItem);
+                    selectedSpellItem->RemoveVobFromWorld();
+                }
+                selectedSpell->Kill();
+            }
+
+            book->spellitems.EmptyList();
+            book->spells.EmptyList();
+
+            auto spellItem = CreateCoopItem(spellInstanceId);
+            if (spellItem) {
+                npc->DoPutInInventory(spellItem);
+                npc->Equip(spellItem);
+
+                oCMag_Book* refreshedBook = npc->GetSpellBook();
+                if (refreshedBook) {
+                    refreshedBook->Open(0);
+                }
+            }
+        }
+
         void UpdateHand(json update) {
             if (!hasModel) {
                 return;
@@ -499,23 +544,37 @@ namespace GOTHIC_ENGINE {
             oCMag_Book* book = npc->GetSpellBook();
             if (book)
             {
-                auto selectedSpell = book->GetSelectedSpell();
-                if (selectedSpell) {
-                    std::vector<json> casts = update["casts"];
-                    for each (auto c in casts) {
-                        auto target = c["target"].get<std::string>();
+                std::vector<json> casts = update["casts"];
+                for each (auto c in casts) {
+                    auto target = c["target"].get<std::string>();
+                    auto spellInstanceId = c["spellInstanceId"].get<int>();
+                    auto spellLevel = c["spellLevel"].get<int>();
+                    auto spellCharge = c["spellCharge"].get<int>();
 
-                        if (!target.empty() && UniqueNameToNpcList.count(target.c_str()) > 0) {
-                            book->Spell_Setup(0, npc, UniqueNameToNpcList[target.c_str()]);
-                        }
-                        else {
-                            zCVob* nullVob = NULL;
-                            book->Spell_Setup(0, npc, nullVob);
-                        }
-
-                        book->Spell_Invest();
-                        book->Spell_Cast();
+                    EnsureSpellSetup(spellInstanceId);
+                    book = npc->GetSpellBook();
+                    if (!book) {
+                        continue;
                     }
+
+                    auto selectedSpell = book->GetSelectedSpell();
+                    if (!selectedSpell) {
+                        continue;
+                    }
+
+                    selectedSpell->spellLevel = spellLevel;
+                    selectedSpell->SetInvestedMana(spellCharge);
+
+                    if (!target.empty() && UniqueNameToNpcList.count(target.c_str()) > 0) {
+                        book->Spell_Setup(0, npc, UniqueNameToNpcList[target.c_str()]);
+                    }
+                    else {
+                        zCVob* nullVob = NULL;
+                        book->Spell_Setup(0, npc, nullVob);
+                    }
+
+                    book->Spell_Invest();
+                    book->Spell_Cast();
                 }
             }
         }

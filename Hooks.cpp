@@ -261,6 +261,16 @@ namespace GOTHIC_ENGINE {
         SpellCast sc;
         sc.npc = (oCNpc*)_this->owner;
         sc.targetNpc = sc.npc->GetFocusNpc();
+        auto selectedSpell = _this->GetSelectedSpell();
+        if (selectedSpell) {
+            oCItem* spellItem = _this->GetSpellItem(selectedSpell);
+            if (spellItem) {
+                sc.spellInstanceId = parser->GetIndex(spellItem->GetInstanceName());
+            }
+
+            sc.spellLevel = selectedSpell->spellLevel;
+            sc.spellCharge = selectedSpell->manaInvested;
+        }
         ReadyToSyncSpellCasts.enqueue(sc);
     }
 

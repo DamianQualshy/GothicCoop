@@ -444,6 +444,9 @@ namespace GOTHIC_ENGINE {
                     for each (auto sc in spellCastsToSync) {
                         nlohmann::json cast;
                         cast["target"] = sc.targetNpcUniqueName;
+                        cast["spellInstanceId"] = sc.spellInstanceId;
+                        cast["spellLevel"] = sc.spellLevel;
+                        cast["spellCharge"] = sc.spellCharge;
                         casts.push_back(cast);
                     }
 

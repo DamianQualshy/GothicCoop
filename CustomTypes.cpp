@@ -43,6 +43,9 @@ namespace GOTHIC_ENGINE {
         oCNpc* targetNpc;
         string npcUniqueName;
         string targetNpcUniqueName;
+        int spellInstanceId = 0;
+        int spellLevel = 0;
+        int spellCharge = 0;
     };
 
     class PeerData
