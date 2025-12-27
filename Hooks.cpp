@@ -411,10 +411,7 @@ namespace GOTHIC_ENGINE {
         }
     }
 
-    // 
-    // The body of this hook is copied from SaveErrorDetails because I cannot call SaveErrorDetails here no idea why.
-    // TODO: Refactor :)
-    // 
+    // Shared crash reporting helper is used here to avoid duplicating SaveErrorDetails logic.
     static void __cdecl zCExceptionHandlerUnhandledExceptionFilter(struct _EXCEPTION_POINTERS*);
 #if ENGINE >= Engine_G2
     CInvoke<void(*)(struct _EXCEPTION_POINTERS*)> Ivk_zCExceptionHandlerUnhandledExceptionFilter(0x004C88C0, &zCExceptionHandlerUnhandledExceptionFilter);
@@ -424,50 +421,8 @@ namespace GOTHIC_ENGINE {
     void zCExceptionHandlerUnhandledExceptionFilter(struct _EXCEPTION_POINTERS* pointers) {
         TrackLastExecutedFunctions = false;
 
-        HANDLE process;
-        process = GetCurrentProcess();
-        DWORD64 dllBase = (DWORD64)GetModuleHandleA("GothicCoop.dll");
-        std::vector<std::string> lastMethodCalls;
-        std::vector<std::string> lastCoreMethodCalls;
-
-        for (int i = 1; i <= LastExecutedFunctionAddressesMaxLimit; i++) {
-            int currentFuncIndex = LastExecutedFunctionAddressesIndex + i;
-            if (currentFuncIndex > LastExecutedFunctionAddressesMaxLimit - 1) {
-                currentFuncIndex = LastExecutedFunctionAddressesMaxLimit - (i + LastExecutedFunctionAddressesIndex);
-                if (currentFuncIndex < 0) {
-                    currentFuncIndex = -currentFuncIndex;
-                }
-            }
-
-            DWORD64 dwDisplacement = 0;
-            DWORD64 dwAddress = (DWORD64)(LastExecutedFunctionAddresses[currentFuncIndex]);
-
-            char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
-            PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)buffer;
-            pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-            pSymbol->MaxNameLen = MAX_SYM_NAME;
-
-            if (SymFromAddr(process, dwAddress, &dwDisplacement, pSymbol))
-            {
-                if (i >= LastExecutedFunctionAddressesMaxLimit - 11 && i != LastExecutedFunctionAddressesMaxLimit) {
-                    lastMethodCalls.push_back(pSymbol->Name);
-                }
-
-                auto symbolName = std::string(pSymbol->Name);
-                if (symbolName.rfind("Gothic_", 0) == 0 && i != LastExecutedFunctionAddressesMaxLimit) {
-                    lastCoreMethodCalls.push_back(symbolName);
-                }
-            }
-            else
-            {
-                auto log = string::Combine("GothicCoop.dll+%i\n", dwAddress - dllBase).ToChar();
-                if (i >= LastExecutedFunctionAddressesMaxLimit - 11 && i != LastExecutedFunctionAddressesMaxLimit) {
-                    lastMethodCalls.push_back(log);
-                }
-            }
-        }
-
-        std::vector<std::string> last10CoreMethodCalls(lastCoreMethodCalls.end() - 10, lastCoreMethodCalls.end());
+        CrashReportData report = BuildCrashReport(false);
+        std::vector<std::string> last10CoreMethodCalls(report.lastCoreMethodCalls.end() - 10, report.lastCoreMethodCalls.end());
         std::string errorMessage = string::Combine("[GothicCoop] Error (v. %i):\n", COOP_VERSION).ToChar();
         std::string errorLog = "";
 
@@ -484,7 +439,7 @@ namespace GOTHIC_ENGINE {
         }
 
         errorMessage += "Calls:\n";
-        for (const auto& piece : lastMethodCalls) {
+        for (const auto& piece : report.lastMethodCalls) {
             errorMessage += piece;
             errorMessage += "\n";
         }

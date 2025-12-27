@@ -34,25 +34,17 @@ namespace GOTHIC_ENGINE {
         }
     }
 
-    void SaveErrorDetails() {
-        TrackLastExecutedFunctions = false;
+    struct CrashReportData {
+        std::vector<std::string> lastMethodCalls;
+        std::vector<std::string> lastCoreMethodCalls;
+    };
 
-        CoopLog("State:\r");
-        CoopLog(PluginState);
-        CoopLog("\r");
-        CoopLog("Last packages:");
-        for (auto data : lastProcessedPackages) {
-            CoopLog(data);
-            CoopLog("\r");
-        }
-        CoopLog("\r");
-
+    static CrashReportData BuildCrashReport(bool logSymbols) {
         HANDLE process;
         process = GetCurrentProcess();
         DWORD64 dllBase = (DWORD64)GetModuleHandleA("GothicCoop.dll");
 
-        std::vector<std::string> lastMethodCalls;
-        std::vector<std::string> lastCoreMethodCalls;
+        CrashReportData report;
 
         for (int i = 1; i <= LastExecutedFunctionAddressesMaxLimit; i++) {
             int currentFuncIndex = LastExecutedFunctionAddressesIndex + i;
@@ -71,30 +63,52 @@ namespace GOTHIC_ENGINE {
             pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
             pSymbol->MaxNameLen = MAX_SYM_NAME;
 
-            if (SymFromAddr(process, dwAddress, &dwDisplacement, pSymbol))
+           if (SymFromAddr(process, dwAddress, &dwDisplacement, pSymbol))
             {
-                CoopLog(pSymbol->Name);
-                CoopLog("\r");
-                if (i >= LastExecutedFunctionAddressesMaxLimit - 11 && i != LastExecutedFunctionAddressesMaxLimit) {
-                    lastMethodCalls.push_back(pSymbol->Name);
+                if (logSymbols) {
+                    CoopLog(pSymbol->Name);
+                    CoopLog("\r");
                 }
-                
+                if (i >= LastExecutedFunctionAddressesMaxLimit - 11 && i != LastExecutedFunctionAddressesMaxLimit) {
+                    report.lastMethodCalls.push_back(pSymbol->Name);
+                }
+
                 auto symbolName = std::string(pSymbol->Name);
                 if (symbolName.rfind("Gothic_", 0) == 0 && i != LastExecutedFunctionAddressesMaxLimit) {
-                    lastCoreMethodCalls.push_back(symbolName);
+                    report.lastCoreMethodCalls.push_back(symbolName);
                 }
             }
             else
             {
                 auto log = string::Combine("GothicCoop.dll+%i\n", dwAddress - dllBase).ToChar();
-                CoopLog(log);
+                if (logSymbols) {
+                    CoopLog(log);
+                }
                 if (i >= LastExecutedFunctionAddressesMaxLimit - 11 && i != LastExecutedFunctionAddressesMaxLimit) {
-                    lastMethodCalls.push_back(log);
+                    report.lastMethodCalls.push_back(log);
                 }
             }
         }
 
-        std::vector<std::string> last10CoreMethodCalls(lastCoreMethodCalls.end() - 10, lastCoreMethodCalls.end());
+        return report;
+    }
+
+    void SaveErrorDetails() {
+        TrackLastExecutedFunctions = false;
+
+        CoopLog("State:\r");
+        CoopLog(PluginState);
+        CoopLog("\r");
+        CoopLog("Last packages:");
+        for (auto data : lastProcessedPackages) {
+            CoopLog(data);
+            CoopLog("\r");
+        }
+        CoopLog("\r");
+
+        CrashReportData report = BuildCrashReport(true);
+
+        std::vector<std::string> last10CoreMethodCalls(report.lastCoreMethodCalls.end() - 10, report.lastCoreMethodCalls.end());
 
         if (GameChat) {
             if (!GameChat->IsShowing()) {
@@ -115,7 +129,7 @@ namespace GOTHIC_ENGINE {
             }
 
             ChatLog("Calls:");
-            for (const auto& piece : lastMethodCalls) {
+            for (const auto& piece : report.lastMethodCalls) {
                 ChatLog(piece.c_str());
             }
 
