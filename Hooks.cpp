@@ -2,6 +2,23 @@ namespace GOTHIC_ENGINE {
     int LastHpBeforeDamage = -1;
     oCNpc::oSDamageDescriptor* LastIgnoredDamDesc = NULL;
 
+    bool ShouldIgnoreDamageHitSound(oCNpc* _this, oCNpc::oSDamageDescriptor& damdesc) {
+        if (damdesc.pNpcAttacker == player && IsCoopPlayer(_this->GetObjectName())) {
+            return true;
+        }
+
+        // Blocking animations on clients for NPC is not preventing attacking sometimes (so do not call unless attack from the coop engine)
+        if (ClientThread &&
+            damdesc.pNpcAttacker != player &&
+            (_this == player || IsCoopPlayer(_this->GetObjectName())) &&
+            damdesc.fDamageTotal != COOP_MAGIC_NUMBER &&
+            damdesc.enuModeDamage != oETypeDamage::oEDamageType_Fall) {
+            return true;
+        }
+
+        return false;
+    }
+
     void __fastcall oCNpc_OnDamage_Hit(oCNpc*, void*, oCNpc::oSDamageDescriptor&);
 #if ENGINE >= Engine_G2
     CInvoke<void(__thiscall*)(oCNpc*, oCNpc::oSDamageDescriptor&)> Ivk_oCNpc_OnDamage_Hit(0x00666610, &oCNpc_OnDamage_Hit);
@@ -9,7 +26,7 @@ namespace GOTHIC_ENGINE {
     CInvoke<void(__thiscall*)(oCNpc*, oCNpc::oSDamageDescriptor&)> Ivk_oCNpc_OnDamage_Hit(0x00731410, &oCNpc_OnDamage_Hit);
 #endif
     void __fastcall oCNpc_OnDamage_Hit(oCNpc* _this, void* vtable, oCNpc::oSDamageDescriptor& damdesc) {
-        if (damdesc.pNpcAttacker == player && IsCoopPlayer(_this->GetObjectName())) {
+        if (ShouldIgnoreDamageHitSound(_this, damdesc)) {
             return;
         }
 
@@ -28,14 +45,6 @@ namespace GOTHIC_ENGINE {
             }
         }
 #endif
-        // Blocking animations on clients for NPC is not preventing attacking sometimes (so do not call unless attack from the coop engine)
-        if (ClientThread && 
-            damdesc.pNpcAttacker != player && 
-            (_this == player || IsCoopPlayer(_this->GetObjectName())) && 
-            damdesc.fDamageTotal != COOP_MAGIC_NUMBER &&
-            damdesc.enuModeDamage != oETypeDamage::oEDamageType_Fall) {
-            return;
-        }
 
         if (ClientThread && damdesc.pNpcAttacker != player) {
             Ivk_oCNpc_OnDamage_Hit(_this, damdesc);
@@ -89,7 +98,7 @@ namespace GOTHIC_ENGINE {
     CInvoke<void(__thiscall*)(oCNpc*, oCNpc::oSDamageDescriptor&)> Ivk_oCNpc_OnDamage_Sound(0x00746660, &oCNpc_OnDamage_Sound);
 #endif
     void __fastcall oCNpc_OnDamage_Sound(oCNpc* _this, void* vtable, oCNpc::oSDamageDescriptor& damdesc) {
-        if (damdesc.pNpcAttacker == player && IsCoopPlayer(_this->GetObjectName())) {
+        if (ShouldIgnoreDamageHitSound(_this, damdesc)) {
             return;
         }
 
