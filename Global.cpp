@@ -43,11 +43,11 @@ namespace GOTHIC_ENGINE {
 #if ENGINE >= Engine_G2
     int MyBodyTextVarNr = 9;
     int MyHeadVarNr = 18;
-    int DefaultBodyTexColorNr = 0;
+    int MyBodyTexColorNr = 0;
 #else
     int MyBodyTextVarNr = 4;
     int MyHeadVarNr = 9;
-    int DefaultBodyTexColorNr = 1;
+    int MyBodyTexColorNr = 1;
 #endif
 
     int ConnectionPort = 1234;

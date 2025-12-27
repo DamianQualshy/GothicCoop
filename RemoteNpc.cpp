@@ -822,7 +822,7 @@ namespace GOTHIC_ENGINE {
             npc->dontWriteIntoArchive = TRUE;
             npc->idx = 69133769;
 
-            npc->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), playerBodyTextVarNr, DefaultBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), playerHeadVarNr, 0, -1);
+            npc->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), playerBodyTextVarNr, MyBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), playerHeadVarNr, 0, -1);
 
 #if ENGINE >= Engine_G2
             npc->SetHitChance(1, 100);

@@ -43,6 +43,9 @@ namespace GOTHIC_ENGINE {
         ConnectionPort = ReadConfigInt("connection", "port", ConnectionPort);
         MyBodyTextVarNr = ReadConfigInt("appearance", "bodyTextVarNr", MyBodyTextVarNr);
         MyHeadVarNr = ReadConfigInt("appearance", "headVarNr", MyHeadVarNr);
+#if ENGINE < Engine_G2
+        MyBodyTexColorNr = ReadConfigInt("appearance", "skinColorG1", MyBodyTexColorNr);
+#endif
         PlayersDamageMultipler = ReadConfigInt("gameplay", "playersDamageMultiplier", PlayersDamageMultipler);
         NpcsDamageMultipler = ReadConfigInt("gameplay", "npcsDamageMultiplier", NpcsDamageMultipler);
 
@@ -151,7 +154,7 @@ namespace GOTHIC_ENGINE {
                 t.Detach();
                 ServerThread = &t;
                 MyselfId = "HOST";
-                player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTextVarNr, DefaultBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), MyHeadVarNr, 0, -1);
+                player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTextVarNr, MyBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), MyHeadVarNr, 0, -1);
             }
 
             if (zinput->KeyToggled(StartConnectionKey) && !ServerThread) {
@@ -165,7 +168,7 @@ namespace GOTHIC_ENGINE {
 
                     ogame->SetTime(ogame->GetWorldTimer()->GetDay(), 12, 00);
                     rtnMan->RestartRoutines();
-                    player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTextVarNr, DefaultBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), MyHeadVarNr, 0, -1);
+                    player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTextVarNr, MyBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), MyHeadVarNr, 0, -1);
                 }
                 else {
                     if (IsCoopPaused) {

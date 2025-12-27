@@ -1,6 +1,6 @@
 #ifndef GOTHIC_COOP_BUILDINFO_H
 #define GOTHIC_COOP_BUILDINFO_H
 
-#define COOP_VERSION_STR "25.12_ac7489c"
+#define COOP_VERSION_STR "25.12_1fdf5bd"
 
 #endif
