@@ -12,7 +12,7 @@ namespace GOTHIC_ENGINE {
 
     string MyselfId = "_player_";
     static LocalNpc* Myself = NULL;
-    int LastFreePlayerId = 0;
+    std::set<int> ActiveFriendIds;
     long long CurrentMs = 0;
     json CoopConfig;
     static bool IsLoadingLevel = false;

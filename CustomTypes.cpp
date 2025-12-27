@@ -48,7 +48,10 @@ namespace GOTHIC_ENGINE {
     class PeerData
     {
     public:
-        string name;
+        string friendId;
+        string nickname;
+        int friendIdNumber = -1;
+        bool announced = false;
         PeerData() {}
     };
 }

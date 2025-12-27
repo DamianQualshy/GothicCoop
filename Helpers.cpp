@@ -134,8 +134,18 @@ namespace GOTHIC_ENGINE {
     };
 
     int GetFreePlayerId() {
-        LastFreePlayerId += 1;
-        return LastFreePlayerId;
+        for (int id = 1; ; id++) {
+            if (ActiveFriendIds.count(id) == 0) {
+                ActiveFriendIds.insert(id);
+                return id;
+            }
+        }
+    }
+
+    void ReleasePlayerId(int id) {
+        if (id > 0) {
+            ActiveFriendIds.erase(id);
+        }
     }
 
     bool IsCoopPlayer(std::string name) {

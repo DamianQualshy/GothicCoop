@@ -19,9 +19,28 @@ namespace GOTHIC_ENGINE {
             return;
         }
 
+        if (type == INIT_NPC) {
+            auto peerData = (PeerData*)packet.peer->data;
+            if (peerData && e.contains("nickname")) {
+                auto nickname = e["nickname"].get<std::string>();
+                if (!nickname.empty()) {
+                    peerData->nickname = nickname.c_str();
+                    if (!peerData->announced) {
+                        ChatLog(string::Combine("(Server) Player %s connected.", string(peerData->nickname)));
+                        peerData->announced = true;
+                    }
+                }
+            }
+        }
+
         if (type == PLAYER_DISCONNECT) {
             string name = e["name"].get<std::string>().c_str();
-            ChatLog(string::Combine("%s disconnected.", name));
+            string nickname = "";
+            if (e.contains("nickname")) {
+                nickname = string(e["nickname"].get<std::string>().c_str());
+            }
+            auto displayName = nickname.IsEmpty() ? name : nickname;
+            ChatLog(string::Combine("%s disconnected.", displayName));
 
             removeSyncedNpc(name);
             return;
@@ -56,8 +75,8 @@ namespace GOTHIC_ENGINE {
         switch (packet.type) {
         case ENET_EVENT_TYPE_CONNECT:
         {
-            auto playerName = string::Combine("FRIEND_%i", GetFreePlayerId());
-            ChatLog(string::Combine("(Server) We got a new connection %s", string(playerName)));
+            auto friendIdNumber = GetFreePlayerId();
+            auto playerName = string::Combine("FRIEND_%i", friendIdNumber);
 
             json j;
             j["id"] = "HOST";
@@ -69,7 +88,8 @@ namespace GOTHIC_ENGINE {
             addSyncedNpc(playerName);
 
             auto d = new PeerData();
-            d->name = playerName;
+            d->friendId = playerName;
+            d->friendIdNumber = friendIdNumber;
             packet.peer->data = d;
 
             if (Myself) {
@@ -93,7 +113,7 @@ namespace GOTHIC_ENGINE {
             }
 
             auto j = json::from_bson(bytesVector);
-            j["id"] = player->name.ToChar();
+            j["id"] = player->friendId.ToChar();
 
             ReadyToBeDistributedPackets.enqueue(j);
             ProcessCoopPacket(j, packet);
@@ -103,15 +123,20 @@ namespace GOTHIC_ENGINE {
         case ENET_EVENT_TYPE_DISCONNECT:
         {
             auto remoteNpc = (PeerData*)(packet.peer->data);
-            ChatLog(string::Combine("%s disconnected.", remoteNpc->name));
+            auto displayName = remoteNpc->nickname.IsEmpty() ? string("Player") : remoteNpc->nickname;
+            ChatLog(string::Combine("%s disconnected.", displayName));
 
             json j;
             j["id"] = "HOST";
             j["type"] = PLAYER_DISCONNECT;
-            j["name"] = string(remoteNpc->name).ToChar();
+            j["name"] = string(remoteNpc->friendId).ToChar();
+            if (!remoteNpc->nickname.IsEmpty()) {
+                j["nickname"] = string(remoteNpc->nickname).ToChar();
+            }
             ReadyToSendJsons.enqueue(j);
 
-            removeSyncedNpc(remoteNpc->name);
+            removeSyncedNpc(remoteNpc->friendId);
+            ReleasePlayerId(remoteNpc->friendIdNumber);
             delete remoteNpc;
             packet.peer->data = NULL;
             break;

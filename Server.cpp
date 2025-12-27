@@ -40,7 +40,7 @@ namespace GOTHIC_ENGINE {
                             continue;
                         }
 
-                        if (!player->name.Compare(playerId.c_str())) {
+                        if (!player->friendId.Compare(playerId.c_str())) {
                             auto bson = json::to_bson(jsonPacket);
 
                             ENetPacket* packet = enet_packet_create(&bson[0], bson.size(), PacketFlag(jsonPacket));
