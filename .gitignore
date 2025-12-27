@@ -375,3 +375,4 @@ healthchecksdb
 *.txt
 /zNoFriendlyFire/G2A Release
 /zNoFriendlyFire/G1 Release
+BuildInfo.h
