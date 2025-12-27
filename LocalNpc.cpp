@@ -27,8 +27,11 @@ namespace GOTHIC_ENGINE {
         zSTRING lastArmorName;
         zSTRING lastLeftHandInstanceName;
         zSTRING lastRightHandInstanceName;
+        zSTRING pendingLeftHandInstanceName;
+        zSTRING pendingRightHandInstanceName;
         zSTRING revivedFriend = "";
         long long lastTimeSyncTime = 0;
+        long long lastHandChangeTime = 0;
         oCItem* pItemDropped = NULL;
         oCItem* pItemTaken = NULL;
         bool itemDropReady = false;
@@ -64,7 +67,7 @@ namespace GOTHIC_ENGINE {
                 this->SyncWeapons();
                 this->SyncProtection();
                 this->SyncTalents();
-                //this->SyncHand();
+                this->SyncHand();
 
                 if (ServerThread) {
                     if (CurrentMs > lastTimeSyncTime + 60000) {
@@ -88,8 +91,11 @@ namespace GOTHIC_ENGINE {
             lastArmorName = zSTRING();
             lastLeftHandInstanceName = zSTRING();
             lastRightHandInstanceName = zSTRING();
+            pendingLeftHandInstanceName = zSTRING();
+            pendingRightHandInstanceName = zSTRING();
             lastSpellInstanceName = "NULL";
             lastTimeSyncTime = 0;
+            lastHandChangeTime = 0;
             lastProtections[0] = -1;
             lastProtections[1] = -1;
             lastProtections[2] = -1;
@@ -193,10 +199,21 @@ namespace GOTHIC_ENGINE {
             auto leftHandInstanceName = leftHand ? leftHand->GetInstanceName() : "NULL";
             auto rightHandInstanceName = rightHand ? rightHand->GetInstanceName() : "NULL";
 
-            if (!leftHandInstanceName.Compare(lastLeftHandInstanceName) || !lastRightHandInstanceName.Compare(rightHandInstanceName)) {
+            if (!pendingLeftHandInstanceName.Compare(leftHandInstanceName) || !pendingRightHandInstanceName.Compare(rightHandInstanceName)) {
+                pendingLeftHandInstanceName = leftHandInstanceName;
+                pendingRightHandInstanceName = rightHandInstanceName;
+                lastHandChangeTime = CurrentMs;
+                return;
+            }
+
+            if (CurrentMs < lastHandChangeTime + 250) {
+                return;
+            }
+
+            if (!lastLeftHandInstanceName.Compare(pendingLeftHandInstanceName) || !lastRightHandInstanceName.Compare(pendingRightHandInstanceName)) {
                 addUpdate(SYNC_HAND);
-                lastLeftHandInstanceName = leftHandInstanceName;
-                lastRightHandInstanceName = rightHandInstanceName;
+                lastLeftHandInstanceName = pendingLeftHandInstanceName;
+                lastRightHandInstanceName = pendingRightHandInstanceName;
             }
         }
 
