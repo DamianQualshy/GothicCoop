@@ -1,3 +1,5 @@
+#include <set>
+
 namespace GOTHIC_ENGINE {
     const int COOP_VERSION = 60;
     const int COOP_MAGIC_NUMBER = 1337;
