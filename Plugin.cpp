@@ -12,15 +12,15 @@ namespace GOTHIC_ENGINE {
         GothicCoopLogPath = logFilePath;
 
         std::string configFilePath = GothicExeFolderPath;
-        configFilePath.append("\\GothicCoopConfig.json");
+        configFilePath.append("\\GothicCoopConfig.toml");
         std::ifstream configFile(configFilePath);
 
         if (configFile.good()) {
             try {
-                CoopConfig = json::parse(configFile);
+                CoopConfig = ParseTomlConfig(configFile);
             }
             catch (...) {
-                Message::Error("(Gothic Coop) Invalid config file, please check your GothicCoopConfig.json file!");
+                Message::Error("(Gothic Coop) Invalid config file, please check your GothicCoopConfig.toml file!");
                 exit(1);
             }
         }
@@ -33,38 +33,37 @@ namespace GOTHIC_ENGINE {
 
     void Game_Init() {
         MainThreadId = GetCurrentThreadId();
-        ToggleGameLogKey = ReadConfigKey("toggleGameLogKey", "KEY_P");
-        ToggleGameStatsKey = ReadConfigKey("toggleGameStatsKey", "KEY_O");
-        StartServerKey = ReadConfigKey("startServerKey", "KEY_F1");
-        StartConnectionKey = ReadConfigKey("startConnectionKey", "KEY_F2");
-        ReinitPlayersKey = ReadConfigKey("reinitPlayersKey", "KEY_F3");
-        RevivePlayerKey = ReadConfigKey("revivePlayerKey", "KEY_F4");
+        ToggleGameLogKey = ReadConfigKey("controls", "toggleGameLogKey", "KEY_P");
+        ToggleGameStatsKey = ReadConfigKey("controls", "toggleGameStatsKey", "KEY_O");
+        StartServerKey = ReadConfigKey("controls", "startServerKey", "KEY_F1");
+        StartConnectionKey = ReadConfigKey("controls", "startConnectionKey", "KEY_F2");
+        ReinitPlayersKey = ReadConfigKey("controls", "reinitPlayersKey", "KEY_F3");
+        RevivePlayerKey = ReadConfigKey("controls", "revivePlayerKey", "KEY_F4");
 
-        if (CoopConfig.contains("port")) {
-            ConnectionPort = CoopConfig["port"].get<int>();
-        }
+        ConnectionPort = ReadConfigInt("connection", "port", ConnectionPort);
+        MyBodyTextVarNr = ReadConfigInt("appearance", "bodyTextVarNr", MyBodyTextVarNr);
+        MyHeadVarNr = ReadConfigInt("appearance", "headVarNr", MyHeadVarNr);
+        PlayersDamageMultipler = ReadConfigInt("gameplay", "playersDamageMultiplier", PlayersDamageMultipler);
+        NpcsDamageMultipler = ReadConfigInt("gameplay", "npcsDamageMultiplier", NpcsDamageMultipler);
 
-        if (CoopConfig.contains("bodyTextVarNr")) {
-            MyBodyTextVarNr = CoopConfig["bodyTextVarNr"].get<int>();
-        }
-
-        if (CoopConfig.contains("headVarNr")) {
-            MyHeadVarNr = CoopConfig["headVarNr"].get<int>();
-        }
-
-        PlayersDamageMultipler = CoopConfig["playersDamageMultipler"].get<int>();
-        NpcsDamageMultipler = CoopConfig["npcsDamageMultipler"].get<int>();
-        if (CoopConfig.contains("friendInstanceId")) {
-            auto stdStringFriendInstanceId = CoopConfig["friendInstanceId"].get<std::string>();
+        auto friendInstanceId = ReadConfigString("player", "friendInstanceId", "");
+        if (!friendInstanceId.empty()) {
+            auto stdStringFriendInstanceId = friendInstanceId;
             std::transform(stdStringFriendInstanceId.begin(), stdStringFriendInstanceId.end(), stdStringFriendInstanceId.begin(), ::tolower);
             FriendInstanceId = string(stdStringFriendInstanceId.c_str()).ToChar();
         }
-        if (CoopConfig.contains("nickname")) {
-            MyNickname = string(CoopConfig["nickname"].get<std::string>().c_str()).ToChar();
+        auto nickname = ReadConfigString("player", "nickname", "");
+        if (!nickname.empty()) {
+            MyNickname = string(nickname.c_str()).ToChar();
         }
-        if (CoopConfig.contains("editmode")) {
-            auto editModeValue = string(CoopConfig["editmode"].get<std::string>().c_str());
-            if (editModeValue.Compare("MARVIN")) {
+
+        auto editModeValue = ReadConfigString("gameplay", "editmode", "");
+        if (editModeValue.empty()) {
+            editModeValue = ReadConfigString("", "editmode", "");
+        }
+        if (!editModeValue.empty()) {
+            auto editModeValueString = string(editModeValue.c_str());
+            if (editModeValueString.Compare("MARVIN")) {
                 WorldEditMode = true;
                 Thread  t;
                 ClientThread = &t;

@@ -1,0 +1,115 @@
+# GothicCoop Configuration File
+# This file uses TOML format for better readability and validation
+# Documentation: https://toml.io/
+
+# ============================================================================
+# CONNECTION SETTINGS
+# ============================================================================
+[connection]
+# Server address to connect to
+# - Use "localhost" or "127.0.0.1" for local testing
+# - Use IP address or hostname for remote servers
+server = "localhost"
+
+# Port number for multiplayer connection
+# Default: 1234
+# Valid range: 1024-65535
+port = 1234
+
+# ============================================================================
+# PLAYER SETTINGS
+# ============================================================================
+[player]
+# Your in-game nickname that other players will see
+# Keep it short and readable (max 20 characters recommended)
+nickname = "player"
+
+# NPC instance ID used for multiplayer friend character
+# Options: "CH" (default), "PC_HERO", etc.
+# This must match the instance defined in your Gothic scripts
+friendInstanceId = "CH"
+
+# ============================================================================
+# APPEARANCE CUSTOMIZATION
+# ============================================================================
+[appearance]
+# Body texture number
+bodyTextVarNr = 9
+
+# Head texture number
+headVarNr = 18
+
+# Head model filename (without extension)
+# Common options:
+# "HUM_HEAD_PONY"
+# "HUM_HEAD_BALD"
+# "HUM_HEAD_FATBALD"
+# "HUM_HEAD_FIGHTER"
+# "HUM_HEAD_THIEF"
+# "HUM_HEAD_PSIONIC"
+headModel = "HUM_HEAD_PONY"
+
+# Skin color (Gothic 1 only)
+# Valid range: 0-3
+# Uncomment the line below if you're playing Gothic 1
+# skinColorG1 = 1
+
+# ============================================================================
+# GAMEPLAY SETTINGS
+# ============================================================================
+[gameplay]
+# Damage multiplier for player attacks (percentage)
+# 100 = normal damage, 50 = half damage, 200 = double damage
+playersDamageMultiplier = 100
+
+# Damage multiplier for NPC attacks (percentage)
+# 100 = normal damage, 50 = half damage, 200 = double damage
+npcsDamageMultiplier = 100
+
+# ============================================================================
+# KEY BINDINGS
+# ============================================================================
+[controls]
+# Toggle game log visibility (chat messages)
+# Press this key to show/hide the chat overlay
+toggleGameLogKey = "KEY_P"
+
+# Toggle game statistics overlay
+# Shows network stats, ping, player count, etc.
+toggleGameStatsKey = "KEY_O"
+
+# Start/stop hosting
+# Only one player should press this to create a session or stop an existing host/client
+startServerKey = "KEY_F1"
+
+# Connect to server / Pause synchronization
+# Press once to connect, press again to pause/resume sync
+startConnectionKey = "KEY_F2"
+
+# Reinitialize all multiplayer NPCs
+# Use this if NPCs get stuck or disappear
+reinitPlayersKey = "KEY_F3"
+
+# Revive player character
+# Use this to help revive downed teammates
+revivePlayerKey = "KEY_F4"
+
+# ============================================================================
+# AVAILABLE KEY CODES
+# ============================================================================
+# You can use any of these key codes in the controls section:
+#
+# Letters: KEY_A through KEY_Z
+# Numbers: KEY_0 through KEY_9
+# Function keys: KEY_F1 through KEY_F12
+# 
+# Special keys:
+# KEY_ESCAPE, KEY_SPACE, KEY_RETURN, KEY_BACK, KEY_TAB
+# KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
+# KEY_LSHIFT, KEY_RSHIFT, KEY_LCONTROL, KEY_RCONTROL
+# KEY_LMENU, KEY_RMENU (ALT keys)
+# KEY_INSERT, KEY_DELETE, KEY_HOME, KEY_END
+# KEY_PRIOR, KEY_NEXT (Page Up/Down)
+# KEY_NUMPAD0 through KEY_NUMPAD9
+# KEY_MULTIPLY, KEY_ADD, KEY_SUBTRACT, KEY_DIVIDE
+# ============================================================================
