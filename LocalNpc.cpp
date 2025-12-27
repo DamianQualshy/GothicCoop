@@ -124,11 +124,11 @@ namespace GOTHIC_ENGINE {
         {
             zVEC3 playerPos = npc->GetPositionWorld();
 
-            int dist = lastPosition != NULL ?
+            float dist = lastPosition != NULL ?
                 GetDistance3D(playerPos.n[0], playerPos.n[1], playerPos.n[2], lastPosition.n[0], lastPosition.n[1], lastPosition.n[2]) :
-                999;
+                999.0f;
 
-            if (dist > 5)
+            if (dist > 5.0f)
             {
                 addUpdate(SYNC_POS);
                 lastPosition = playerPos;

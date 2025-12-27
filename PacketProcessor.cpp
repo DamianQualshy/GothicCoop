@@ -108,7 +108,7 @@ namespace GOTHIC_ENGINE {
             const char* data = (const char*)packet.packet->data;
 
             std::vector<std::uint8_t> bytesVector;
-            for (int i = 0; i < dataLenght; i++) {
+            for (size_t i = 0; i < dataLenght; i++) {
                 bytesVector.push_back(data[i]);
             }
 
@@ -151,7 +151,7 @@ namespace GOTHIC_ENGINE {
             auto dataLenght = packet.packet->dataLength;
             const char* data = (const char*)packet.packet->data;
             std::vector<std::uint8_t> bytesVector;
-            for (int i = 0; i < dataLenght; i++) {
+            for (size_t i = 0; i < dataLenght; i++) {
                 bytesVector.push_back(data[i]);
             }
 

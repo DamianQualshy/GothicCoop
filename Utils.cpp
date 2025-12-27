@@ -67,7 +67,8 @@ namespace GOTHIC_ENGINE {
 		mds.Upper();
 
 		auto arr = MdsHumansMap.GetArray();
-		for (int i = 0; i < arr.GetNum(); i++) {
+		const int count = static_cast<int>(arr.GetNum());
+		for (int i = 0; i < count; i++) {
 			if (auto pair = arr.GetSafe(i)) {
 				if (mds == pair->GetKey()) {
 					return pair->GetValue();
@@ -84,7 +85,8 @@ namespace GOTHIC_ENGINE {
 	zSTRING GetMdsByIndex(int index) {
 		CheckMdsMap();
 		auto arr = MdsHumansMap.GetArray();
-		for (int i = 0; i < arr.GetNum(); i++) {
+		const int count = static_cast<int>(arr.GetNum());
+		for (int i = 0; i < count; i++) {
 			if (auto pair = arr.GetSafe(i)) {
 				if (index == pair->GetValue()) {
 					return pair->GetKey();
@@ -215,8 +217,9 @@ namespace GOTHIC_ENGINE {
 			return vobList;
 		}
 
-		box.maxs = pos + (zVEC3(1, 1, 1) * radius);
-		box.mins = pos - (zVEC3(1, 1, 1) * radius);
+		const float radiusFloat = static_cast<float>(radius);
+		box.maxs = pos + (zVEC3(1, 1, 1) * radiusFloat);
+		box.mins = pos - (zVEC3(1, 1, 1) * radiusFloat);
 
 		oCNpc* other = NULL;
 

@@ -32,7 +32,7 @@ namespace GOTHIC_ENGINE {
                     auto jsonPacket = ReadyToBeDistributedPackets.dequeue();
                     auto playerId = jsonPacket["id"].get<std::string>();
 
-                    for (int i = 0; i < server->peerCount; i++) {
+                    for (size_t i = 0; i < server->peerCount; i++) {
                         auto peer = &server->peers[i];
                         auto player = (PeerData*)peer->data;
 

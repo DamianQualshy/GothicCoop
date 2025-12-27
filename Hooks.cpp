@@ -53,19 +53,19 @@ namespace GOTHIC_ENGINE {
             return;
         }
 
-        float HpMultipler = 1.0;
+        float HpMultipler = 1.0f;
         if (damdesc.pNpcAttacker == player) {
-            HpMultipler = PlayersDamageMultipler / 100.0;
+            HpMultipler = PlayersDamageMultipler / 100.0f;
         }
         else if (_this == player) {
-            HpMultipler = NpcsDamageMultipler / 100.0;
+            HpMultipler = NpcsDamageMultipler / 100.0f;
         }
 
         int HpBeforeOnDamage = _this->GetAttribute(NPC_ATR_HITPOINTS);
         int MaxHpBeforeOnDamage = _this->GetAttribute(NPC_ATR_HITPOINTSMAX);
         LastHpBeforeDamage = HpBeforeOnDamage;
 
-        if (HpMultipler == 1.0) {
+        if (HpMultipler == 1.0f) {
             Ivk_oCNpc_OnDamage_Hit(_this, damdesc);
             return;
         }
@@ -76,7 +76,7 @@ namespace GOTHIC_ENGINE {
         Ivk_oCNpc_OnDamage_Hit(_this, damdesc);
 
         int RealDamage = (100000 - _this->GetAttribute(NPC_ATR_HITPOINTS));
-        int HpDamage = RealDamage * HpMultipler;
+        int HpDamage = static_cast<int>(RealDamage * HpMultipler);
 
         _this->SetAttribute(NPC_ATR_HITPOINTS, HpBeforeOnDamage - HpDamage);
         _this->SetAttribute(NPC_ATR_HITPOINTSMAX, MaxHpBeforeOnDamage);
@@ -126,7 +126,7 @@ namespace GOTHIC_ENGINE {
         }
 
         PlayerHit hit;
-        hit.damage = LastHpBeforeDamage - _this->GetAttribute(NPC_ATR_HITPOINTS);
+        hit.damage = static_cast<float>(LastHpBeforeDamage - _this->GetAttribute(NPC_ATR_HITPOINTS));
         hit.attacker = damdesc.pNpcAttacker;
         hit.npc = _this;
         hit.isDead = _this->IsDead();
@@ -491,7 +491,7 @@ namespace GOTHIC_ENGINE {
         {
             if (auto pItem = vob->CastTo<oCItem>())
             {
-                int randVal = GetRandVal(0, 2e9);
+                int randVal = GetRandVal(0, 2000000000);
                 pItem->SetObjectName("RX_DROPPED_ITEM_" + Z randVal);
                 Myself->pItemDropped = pItem;
                 Myself->itemDropReady = true;

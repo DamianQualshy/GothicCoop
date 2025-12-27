@@ -206,8 +206,8 @@ namespace GOTHIC_ENGINE {
             if (CurrentWorldTOTPosition) {
                 auto newPosition = zVEC3(x, y, z);
                 auto totPos = *CurrentWorldTOTPosition;
-                int dist = GetDistance3D(newPosition.n[0], newPosition.n[1], newPosition.n[2], totPos.n[0], totPos.n[1], totPos.n[2]);
-                if (dist < 500) {
+                float dist = GetDistance3D(newPosition.n[0], newPosition.n[1], newPosition.n[2], totPos.n[0], totPos.n[1], totPos.n[2]);
+                if (dist < 500.0f) {
                     destroyed = true;
                     return;
                 }
@@ -550,7 +550,7 @@ namespace GOTHIC_ENGINE {
                     if (stillAlive) {
                         targetNpc->SetAttribute(NPC_ATR_HITPOINTS, 999999);
                         targetNpc->GetEM(false)->OnDamage(targetNpc, npc, COOP_MAGIC_NUMBER, damageMode, targetNpc->GetPositionWorld());
-                        targetNpc->SetAttribute(NPC_ATR_HITPOINTS, health - damage);
+                        targetNpc->SetAttribute(NPC_ATR_HITPOINTS, health - static_cast<int>(damage));
                     }
                     else {
                         targetNpc->SetAttribute(NPC_ATR_HITPOINTS, 1);
@@ -607,7 +607,8 @@ namespace GOTHIC_ENGINE {
                             targetNpc->GetEM(false)->OnDamage(targetNpc, npc, COOP_MAGIC_NUMBER, damageMode, targetNpc->GetPositionWorld());
                         }
                         if (ServerThread) {
-                            targetNpc->SetAttribute(NPC_ATR_HITPOINTS, health - damage > 0 ? health - damage : 0);
+                            const int remainingHealth = health - static_cast<int>(damage);
+                            targetNpc->SetAttribute(NPC_ATR_HITPOINTS, remainingHealth > 0 ? remainingHealth : 0);
                         }
                     }
                     else {
@@ -904,7 +905,7 @@ namespace GOTHIC_ENGINE {
 
         void RespawnOrDestroyBasedOnDistance() {
             if (hasNpc && lastPositionFromServer) {
-                auto dist = (int)(*lastPositionFromServer - player->GetPositionWorld()).LengthApprox();
+                float dist = (*lastPositionFromServer - player->GetPositionWorld()).LengthApprox();
 
                 if (IsCoopPlayer(name)) {
                     if (dist > BROADCAST_DISTANCE && isSpawned) {
@@ -930,8 +931,8 @@ namespace GOTHIC_ENGINE {
             if (lastPositionFromServer && CurrentWorldTOTPosition && npc && !IsCoopPlayer(name)) {
                 auto newPosition = npc->GetPositionWorld();
                 auto totPos = *CurrentWorldTOTPosition;
-                int dist = GetDistance3D(newPosition.n[0], newPosition.n[1], newPosition.n[2], totPos.n[0], totPos.n[1], totPos.n[2]);
-                if (dist < 500) {
+                float dist = GetDistance3D(newPosition.n[0], newPosition.n[1], newPosition.n[2], totPos.n[0], totPos.n[1], totPos.n[2]);
+                if (dist < 500.0f) {
                     destroyed = true;
                     return true;
                 }
