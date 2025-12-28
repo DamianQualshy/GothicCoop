@@ -507,21 +507,30 @@ namespace GOTHIC_ENGINE {
     CInvoke<int(__thiscall*)(oCNpc*, zCVob*)> Ivk_oCNpc_DoDropVob(0x006A10F0, &oCNpc_DoDropVob);
 #endif
     int __fastcall oCNpc_DoDropVob(oCNpc* _this, void* vtable, zCVob* vob) {
-        if (Myself && _this && _this->IsAPlayer() && vob && (!_this->IsDead() && !_this->IsUnconscious()))
+        auto dropResult = Ivk_oCNpc_DoDropVob(_this, vob);
+
+        if (Myself && _this && _this->IsAPlayer() && vob)
         {
             if (auto pItem = vob->CastTo<oCItem>())
             {
-                int randVal = GetRandVal(0, 2000000000);
-                pItem->SetObjectName("RX_DROPPED_ITEM_" + Z randVal);
-                Myself->pItemDropped = pItem;
-                Myself->itemDropReady = true;
-                Myself->SyncOnDropItem();
-
-                return Ivk_oCNpc_DoDropVob(_this, vob);
+                auto bodyState = _this->GetBodyState();
+                bool isDropBodyState = bodyState == BS_DROPITEM || bodyState == BS_THROWITEM;
+                if (pItem->GetHomeWorld()
+                    && !_this->IsDead()
+                    && !_this->IsUnconscious()
+                    && _this->GetBodyState() != BS_DEAD
+                    && _this->GetBodyState() != BS_UNCONSCIOUS
+                    && isDropBodyState
+                    && !pItem->GetObjectName().StartWith("RX_DROPPED_ITEM_"))
+                {
+                    int randVal = GetRandVal(0, 2000000000);
+                    pItem->SetObjectName("RX_DROPPED_ITEM_" + Z randVal);
+                    Myself->pItemDropped = pItem;
+                    Myself->itemDropReady = true;
+                    Myself->SyncOnDropItem();
+                }
             }
         }
-
-        auto dropResult = Ivk_oCNpc_DoDropVob(_this, vob);
 
         if (_this && vob && IsCoopPlayer(_this->GetObjectName())) {
             if (auto pItem = vob->CastTo<oCItem>())
