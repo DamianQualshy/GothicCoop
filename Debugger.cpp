@@ -1,5 +1,6 @@
 namespace GOTHIC_ENGINE {
     std::vector<std::string> lastProcessedPackages;
+    std::mutex lastProcessedPackagesMutex;
 
     const int LastExecutedFunctionAddressesMaxLimit = 5000;
     PBYTE LastExecutedFunctionAddresses[LastExecutedFunctionAddressesMaxLimit];
@@ -96,11 +97,17 @@ namespace GOTHIC_ENGINE {
     void SaveErrorDetails() {
         TrackLastExecutedFunctions = false;
 
+        std::vector<std::string> lastPackagesCopy;
+        {
+            std::lock_guard<std::mutex> lock(lastProcessedPackagesMutex);
+            lastPackagesCopy = lastProcessedPackages;
+        }
+
         CoopLog("State:\r");
         CoopLog(PluginState);
         CoopLog("\r");
         CoopLog("Last packages:");
-        for (auto data : lastProcessedPackages) {
+        for (auto data : lastPackagesCopy) {
             CoopLog(data);
             CoopLog("\r");
         }
@@ -124,7 +131,7 @@ namespace GOTHIC_ENGINE {
             }
 
             ChatLog("Packages:");
-            for (auto data : lastProcessedPackages) {
+            for (auto data : lastPackagesCopy) {
                 ChatLog(data.c_str());
             }
 
@@ -146,6 +153,7 @@ namespace GOTHIC_ENGINE {
     }
 
     void SaveNetworkPacket(const char* data) {
+        std::lock_guard<std::mutex> lock(lastProcessedPackagesMutex);
         if (lastProcessedPackages.size() < 10) {
             lastProcessedPackages.push_back(std::string(data));
         }
