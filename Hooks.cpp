@@ -51,11 +51,6 @@ namespace GOTHIC_ENGINE {
             return;
         }
 
-        if (ServerThread && PlayerNpcs.count(damdesc.pNpcAttacker)) {
-            Ivk_oCNpc_OnDamage_Hit(_this, damdesc);
-            return;
-        }
-
         if (damdesc.pNpcAttacker == player && damdesc.fDamageTotal == COOP_MAGIC_NUMBER) {
             LastIgnoredDamDesc = &damdesc;
             Ivk_oCNpc_OnDamage_Hit(_this, damdesc);
@@ -63,10 +58,14 @@ namespace GOTHIC_ENGINE {
         }
 
         float HpMultipler = 1.0f;
-        if (damdesc.pNpcAttacker == player) {
+        bool attackerIsPlayerNpc = damdesc.pNpcAttacker &&
+            (damdesc.pNpcAttacker == player || IsCoopPlayer(damdesc.pNpcAttacker->GetObjectName()));
+        bool targetIsPlayerNpc = (_this == player || IsCoopPlayer(_this->GetObjectName()));
+
+        if (attackerIsPlayerNpc) {
             HpMultipler = PlayersDamageMultipler / 100.0f;
         }
-        else if (_this == player) {
+        else if (targetIsPlayerNpc) {
             HpMultipler = NpcsDamageMultipler / 100.0f;
         }
 

@@ -565,12 +565,17 @@ namespace GOTHIC_ENGINE {
                     selectedSpell->spellLevel = spellLevel;
                     selectedSpell->SetInvestedMana(spellCharge);
 
+                    int spellIndex = book->GetSelectedSpellNr();
+                    if (spellIndex < 0) {
+                        spellIndex = 0;
+                    }
+
                     if (!target.empty() && UniqueNameToNpcList.count(target.c_str()) > 0) {
-                        book->Spell_Setup(0, npc, UniqueNameToNpcList[target.c_str()]);
+                        book->Spell_Setup(spellIndex, npc, UniqueNameToNpcList[target.c_str()]);
                     }
                     else {
                         zCVob* nullVob = NULL;
-                        book->Spell_Setup(0, npc, nullVob);
+                        book->Spell_Setup(spellIndex, npc, nullVob);
                     }
 
                     book->Spell_Invest();
