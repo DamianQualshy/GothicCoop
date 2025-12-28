@@ -206,9 +206,7 @@ namespace GOTHIC_ENGINE {
 
     void PacketProcessorLoop() {
         PluginState = "PacketProcessorLoop";
-        if (ReadyToBeReceivedPackets.isEmpty()) {
-            return;
-        }
+        // Called from the main game tick loop, so avoid blocking when idle.
 
         while (!ReadyToBeReceivedPackets.isEmpty()) {
             auto packet = ReadyToBeReceivedPackets.dequeue();
