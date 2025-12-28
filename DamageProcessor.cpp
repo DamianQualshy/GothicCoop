@@ -14,6 +14,10 @@ namespace GOTHIC_ENGINE {
         }
 
         if (Myself && hit.attacker == Myself->npc) {
+            if (!EnsureNpcUniqueName(hit.npc)) {
+                return;
+            }
+
             hit.npcUniqueName = NpcToUniqueNameList[hit.npc];
 
             if (hit.npc->IsDead()) {
@@ -29,6 +33,10 @@ namespace GOTHIC_ENGINE {
                 return;
             }
 
+            if (!EnsureNpcUniqueName(hit.attacker)) {
+                return;
+            }
+
             auto uniqueNpcName = NpcToUniqueNameList[hit.attacker];
             if (uniqueNpcName && BroadcastNpcs.count(uniqueNpcName)) {
                 if (hit.npc == player) {
@@ -39,7 +47,7 @@ namespace GOTHIC_ENGINE {
                     hit.npcUniqueName = PlayerNpcs[hit.npc];
                     BroadcastNpcs[uniqueNpcName]->hitsToSync.push_back(hit);
                 }
-                else if (NpcToUniqueNameList.count(hit.npc)) {
+                else if (EnsureNpcUniqueName(hit.npc)) {
                     hit.npcUniqueName = NpcToUniqueNameList[hit.npc];
                     BroadcastNpcs[uniqueNpcName]->hitsToSync.push_back(hit);
                 }

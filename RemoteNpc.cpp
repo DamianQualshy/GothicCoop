@@ -652,7 +652,13 @@ namespace GOTHIC_ENGINE {
                 }
 
                 // attack any world npc (eg. client attacks Moe, Cavalorn attacks goblin, wolf attacks sheep)
-                auto targetNpc = UniqueNameToNpcList[target.c_str()];
+                auto targetNpcEntry = UniqueNameToNpcList.find(target.c_str());
+                if (targetNpcEntry == UniqueNameToNpcList.end()) {
+                    BuildGlobalNpcList();
+                    targetNpcEntry = UniqueNameToNpcList.find(target.c_str());
+                }
+
+                auto targetNpc = targetNpcEntry != UniqueNameToNpcList.end() ? targetNpcEntry->second : nullptr;
                 if (targetNpc) {
                     int health = targetNpc->GetAttribute(NPC_ATR_HITPOINTS);
                     auto isTalkingWith = IsPlayerTalkingWithNpc(targetNpc);

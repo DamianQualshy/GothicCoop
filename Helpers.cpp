@@ -317,6 +317,23 @@ namespace GOTHIC_ENGINE {
         }
     }
 
+    bool EnsureNpcUniqueName(oCNpc* npc) {
+        if (!npc) {
+            return false;
+        }
+
+        if (NpcToUniqueNameList.count(npc) > 0) {
+            return true;
+        }
+
+        if (npc->IsAPlayer() || npc->GetObjectName().StartWith("FRIEND_") || IgnoredSyncNpc(npc)) {
+            return false;
+        }
+
+        BuildGlobalNpcList();
+        return NpcToUniqueNameList.count(npc) > 0;
+    }
+
     long long GetCurrentMs() {
         std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()
