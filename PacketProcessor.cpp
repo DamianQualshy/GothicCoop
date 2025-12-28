@@ -148,6 +148,7 @@ namespace GOTHIC_ENGINE {
             ReadyToBeDistributedPackets.enqueue(j);
             ProcessCoopPacket(j, packet);
             SaveNetworkPacket(j.dump(-1, ' ', false, json::error_handler_t::ignore).c_str());
+            enet_packet_destroy(packet.packet);
             break;
         }
         case ENET_EVENT_TYPE_DISCONNECT:
