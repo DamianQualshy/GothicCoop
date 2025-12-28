@@ -129,6 +129,11 @@ namespace GOTHIC_ENGINE {
         case ENET_EVENT_TYPE_RECEIVE:
         {
             auto player = (PeerData*)packet.peer->data;
+            if (!player) {
+                ChatLog("Received packet from peer without data; ignoring.");
+                enet_packet_destroy(packet.packet);
+                break;
+            }
             auto dataLenght = packet.packet->dataLength;
             const char* data = (const char*)packet.packet->data;
 
@@ -148,21 +153,23 @@ namespace GOTHIC_ENGINE {
         case ENET_EVENT_TYPE_DISCONNECT:
         {
             auto remoteNpc = (PeerData*)(packet.peer->data);
-            auto displayName = remoteNpc->nickname.IsEmpty() ? string("Player") : remoteNpc->nickname;
+            auto displayName = remoteNpc ? (remoteNpc->nickname.IsEmpty() ? string("Player") : remoteNpc->nickname) : string("Player");
             ChatLog(string::Combine("%s disconnected.", displayName));
 
             json j;
             j["id"] = "HOST";
             j["type"] = PLAYER_DISCONNECT;
-            j["name"] = string(remoteNpc->friendId).ToChar();
-            if (!remoteNpc->nickname.IsEmpty()) {
+            j["name"] = remoteNpc ? string(remoteNpc->friendId).ToChar() : "Player";
+            if (remoteNpc && !remoteNpc->nickname.IsEmpty()) {
                 j["nickname"] = string(remoteNpc->nickname).ToChar();
             }
             ReadyToSendJsons.enqueue(j);
 
-            removeSyncedNpc(remoteNpc->friendId);
-            ReleasePlayerId(remoteNpc->friendIdNumber);
-            delete remoteNpc;
+            if (remoteNpc) {
+                removeSyncedNpc(remoteNpc->friendId);
+                ReleasePlayerId(remoteNpc->friendIdNumber);
+                delete remoteNpc;
+            }
             packet.peer->data = NULL;
             break;
         }
