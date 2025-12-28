@@ -39,11 +39,13 @@ namespace GOTHIC_ENGINE {
 
         bool isEmpty()
         {
+            std::lock_guard<std::mutex> lock(m);
             return q.empty();
         }
 
         int size()
         {
+            std::lock_guard<std::mutex> lock(m);
             return q.size();
         }
 
