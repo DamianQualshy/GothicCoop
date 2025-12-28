@@ -59,6 +59,11 @@ namespace GOTHIC_ENGINE {
                 auto update = localUpdates.front();
                 localUpdates.erase(localUpdates.begin());
 
+                if (!update.contains("type") || !update["type"].is_number_integer()) {
+                    ChatLog("Invalid NPC update packet (type).");
+                    continue;
+                }
+
                 auto type = update["type"].get<int>();
                 PluginState = "Updating NPC " + name + " TYPE: " + type;
 
@@ -714,6 +719,10 @@ namespace GOTHIC_ENGINE {
 
         void UpdateTime(json update) {
             if (!IsPlayerTalkingWithAnybody()) {
+                if (!update.contains("h") || !update["h"].is_number_integer() || !update.contains("m") || !update["m"].is_number_integer()) {
+                    ChatLog("Invalid SYNC_TIME packet.");
+                    return;
+                }
                 auto h = update["h"].get<int>();
                 auto m = update["m"].get<int>();
                 ogame->GetWorldTimer()->SetTime(h, m);
@@ -721,6 +730,10 @@ namespace GOTHIC_ENGINE {
         }
 
         void UpdateRevived(json update) {
+            if (!update.contains("name") || !update["name"].is_string()) {
+                ChatLog("Invalid SYNC_REVIVED packet.");
+                return;
+            }
             auto name = update["name"].get<std::string>();
 
             if (player->IsDead() && name.compare(MyselfId) == 0) {
@@ -734,6 +747,14 @@ namespace GOTHIC_ENGINE {
 
         void UpdateDropItem(json update) {
             if (!hasModel) {
+                return;
+            }
+
+            if (!update.contains("itemDropped") || !update["itemDropped"].is_string()
+                || !update.contains("count") || !update["count"].is_number_integer()
+                || !update.contains("flags") || !update["flags"].is_number_integer()
+                || !update.contains("itemUniqName") || !update["itemUniqName"].is_string()) {
+                ChatLog("Invalid SYNC_DROPITEM packet.");
                 return;
             }
 

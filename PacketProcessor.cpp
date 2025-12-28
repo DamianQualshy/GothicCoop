@@ -1,5 +1,10 @@
 namespace GOTHIC_ENGINE {
     void ProcessCoopPacket(json e, ENetEvent packet) {
+        if (!e.contains("id") || !e["id"].is_string() || !e.contains("type") || !e["type"].is_number_integer()) {
+            ChatLog("Invalid packet received (missing id/type).");
+            return;
+        }
+
         auto id = e["id"].get<std::string>();
         auto type = e["type"].get<int>();
         RemoteNpc* npcToSync = NULL;
@@ -9,6 +14,11 @@ namespace GOTHIC_ENGINE {
         }
 
         if (type == SYNC_PLAYER_NAME) {
+            if (!e.contains("connectId") || !e["connectId"].is_number_integer() || !e.contains("name") || !e["name"].is_string()) {
+                ChatLog("Invalid SYNC_PLAYER_NAME packet.");
+                return;
+            }
+
             auto connectId = e["connectId"].get<enet_uint32>();
 
             if (connectId == packet.peer->connectID) {
@@ -22,6 +32,11 @@ namespace GOTHIC_ENGINE {
         if (type == INIT_NPC) {
             auto peerData = (PeerData*)packet.peer->data;
             if (peerData && e.contains("nickname")) {
+                if (!e["nickname"].is_string()) {
+                    ChatLog("Invalid INIT_NPC packet (nickname).");
+                    return;
+                }
+
                 auto nickname = e["nickname"].get<std::string>();
                 if (!nickname.empty()) {
                     peerData->nickname = nickname.c_str();
@@ -34,9 +49,19 @@ namespace GOTHIC_ENGINE {
         }
 
         if (type == PLAYER_DISCONNECT) {
+            if (!e.contains("name") || !e["name"].is_string()) {
+                ChatLog("Invalid PLAYER_DISCONNECT packet.");
+                return;
+            }
+
             string name = e["name"].get<std::string>().c_str();
             string nickname = "";
             if (e.contains("nickname")) {
+                if (!e["nickname"].is_string()) {
+                    ChatLog("Invalid PLAYER_DISCONNECT packet (nickname).");
+                    return;
+                }
+                
                 nickname = string(e["nickname"].get<std::string>().c_str());
             }
             auto displayName = nickname.IsEmpty() ? name : nickname;
