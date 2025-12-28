@@ -1,9 +1,7 @@
 #include <set>
 
-#include "BuildInfo.h"
-
 namespace GOTHIC_ENGINE {
-    const char* COOP_VERSION = COOP_VERSION_STR;
+    const int COOP_VERSION = 60;
     const int COOP_MAGIC_NUMBER = 1337;
     int BROADCAST_DISTANCE = 4500;
 

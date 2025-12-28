@@ -33,12 +33,12 @@ namespace GOTHIC_ENGINE {
             enet_host_service(client, &event, 5000) > 0
             && event.type == ENET_EVENT_TYPE_CONNECT)
         {
-            ChatLog(string::Combine("Connection to the server %s succeeded (v. %s, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
+            ChatLog(string::Combine("Connection to the server %s succeeded (v. %i, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
         }
         else
         {
             enet_peer_reset(peer);
-            ChatLog(string::Combine("Connection to the server %s failed (v. %s, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
+            ChatLog(string::Combine("Connection to the server %s failed (v. %i, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
         }
 
         while (true) {

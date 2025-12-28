@@ -2523,21 +2523,6 @@
   <ItemGroup>
     <Image Include="union.ico" />
   </ItemGroup>
-  <Target Name="GenerateBuildInfo" BeforeTargets="ClCompile">
-    <Exec Command="git rev-parse --short HEAD" WorkingDirectory="$(ProjectDir)" ConsoleToMSBuild="true" IgnoreExitCode="true">
-      <Output TaskParameter="ConsoleOutput" ItemName="GitHashOutput" />
-    </Exec>
-    <Exec Command="powershell -NoProfile -Command &quot;Get-Date -Format yy.MM&quot;" ConsoleToMSBuild="true" IgnoreExitCode="true">
-      <Output TaskParameter="ConsoleOutput" ItemName="DateOutput" />
-    </Exec>
-    <PropertyGroup>
-      <GitHash>$([System.String]::Copy('%(GitHashOutput.Identity)').Trim())</GitHash>
-      <BuildDate>$([System.String]::Copy('%(DateOutput.Identity)').Trim())</BuildDate>
-      <GitHash Condition="'$(GitHash)' == ''">unknown</GitHash>
-      <BuildDate Condition="'$(BuildDate)' == ''">00.00</BuildDate>
-    </PropertyGroup>
-    <WriteLinesToFile File="$(ProjectDir)BuildInfo.h" Lines="#ifndef GOTHIC_COOP_BUILDINFO_H&#x0D;&#x0A;#define GOTHIC_COOP_BUILDINFO_H&#x0D;&#x0A;&#x0D;&#x0A;#define COOP_VERSION_STR &quot;$(BuildDate)_$(GitHash)&quot;&#x0D;&#x0A;&#x0D;&#x0A;#endif&#x0D;&#x0A;" Overwrite="true" Encoding="ASCII" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

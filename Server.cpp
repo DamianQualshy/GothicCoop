@@ -19,7 +19,7 @@ namespace GOTHIC_ENGINE {
             return EXIT_FAILURE;
         }
 
-        ChatLog(string::Combine("(Server) Ready (v. %s, port %i).", COOP_VERSION, address.port));
+        ChatLog(string::Combine("(Server) Ready (v. %i, port %i).", COOP_VERSION, address.port));
         while (true) {
             try {
                 ENetEvent event;
