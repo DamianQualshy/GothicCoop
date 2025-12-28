@@ -115,7 +115,12 @@ namespace GOTHIC_ENGINE {
 
         CrashReportData report = BuildCrashReport(true);
 
-        std::vector<std::string> last10CoreMethodCalls(report.lastCoreMethodCalls.end() - 10, report.lastCoreMethodCalls.end());
+        auto count = report.lastCoreMethodCalls.size();
+        auto start = report.lastCoreMethodCalls.begin() + (count > 10 ? count - 10 : 0);
+        std::vector<std::string> last10CoreMethodCalls(start, report.lastCoreMethodCalls.end());
+        if (report.lastCoreMethodCalls.empty()) {
+            CoopLog("Core calls list is empty.\r");
+        }
 
         if (GameChat) {
             if (!GameChat->IsShowing()) {
