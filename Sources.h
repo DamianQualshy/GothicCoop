@@ -8,6 +8,7 @@
 #include "Chat.cpp"
 #include "Utils.cpp"
 #include "Global.cpp"
+#include "Config.cpp"
 #include "Helpers.cpp"
 #include "Debugger.cpp"
 #include "PlayerAnimation.cpp"

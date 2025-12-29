@@ -406,8 +406,8 @@ namespace GOTHIC_ENGINE {
                     j["x"] = lastPosition.n[0];
                     j["y"] = lastPosition.n[1];
                     j["z"] = lastPosition.n[2];
-                    j["bodyTextVarNr"] = MyBodyTextVarNr;
-                    j["headVarNr"] = MyHeadVarNr;
+                    j["BodyTex"] = MyBodyTex;
+                    j["HeadTex"] = MyHeadTex;
                     break;
                 }
                 case SYNC_POS:

@@ -3,6 +3,7 @@
 
 // Automatically generated block
 #pragma region Includes
+#include "Config.h"
 #include "MappedPort.h"
 #include "KeyCodes.h"
 #include "Plugin.h"

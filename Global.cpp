@@ -16,7 +16,7 @@ namespace GOTHIC_ENGINE {
     static LocalNpc* Myself = NULL;
     std::set<int> ActiveFriendIds;
     long long CurrentMs = 0;
-    json CoopConfig;
+    Config CoopConfig;
     static bool IsLoadingLevel = false;
     static bool IsSavingGame = false;
     static bool IsCoopPaused = false;
@@ -25,9 +25,8 @@ namespace GOTHIC_ENGINE {
     zVEC3* CurrentWorldTOTPosition;
     int CurrentPing = -1;
 
-    string FriendInstanceId = "ch";
+    string FriendInstance = "ch";
     string MyNickname = "";
-    bool WorldEditMode = false;
 
     int PlayersDamageMultipler = 50;
     int NpcsDamageMultipler = 100;
@@ -39,13 +38,15 @@ namespace GOTHIC_ENGINE {
     int RevivePlayerKey;
 
 #if ENGINE >= Engine_G2
-    int MyBodyTextVarNr = 9;
-    int MyHeadVarNr = 18;
-    int MyBodyTexColorNr = 0;
+    std::string MyBodyModel = "HUM_BODY_NAKED0";
+    int MyBodyTex = 9;
+    std::string MyHeadModel = "HUM_HEAD_PONY";
+    int MyHeadTex = 18;
+    int MyBodyColor = 0;
 #else
-    int MyBodyTextVarNr = 4;
-    int MyHeadVarNr = 9;
-    int MyBodyTexColorNr = 1;
+    int MyBodyTex = 4;
+    int MyHeadTex = 9;
+    int MyBodyColor = 1;
 #endif
 
     int ConnectionPort = 1234;

@@ -368,7 +368,7 @@ namespace GOTHIC_ENGINE {
             return;
         }
 
-        if (zinput->KeyPressed(KEY_F2) && !WorldEditMode) {
+        if (zinput->KeyPressed(KEY_F2)) {
             Ivk_zCModel_StartAni(_this, a, b);
             return;
         }
@@ -397,7 +397,7 @@ namespace GOTHIC_ENGINE {
             return;
         }
 
-        if (!WorldEditMode && player && player->GetFocusNpc() == _this->homeVob && a && a->aniName &&
+        if (player && player->GetFocusNpc() == _this->homeVob && a && a->aniName &&
            (a->aniName == "S_RUN" || a->aniName == "S_WALK" || a->aniName == "T_LOOK" || a->aniName == "T_WALKTURNR" || a->aniName == "T_WALKTURNL")) 
         {
             Ivk_zCModel_StartAni(_this, a, b);
