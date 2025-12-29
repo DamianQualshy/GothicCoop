@@ -24,20 +24,25 @@ port = 1234
 # Keep it short and readable (max 20 characters recommended)
 nickname = "player"
 
-# NPC instance ID used for multiplayer friend character
+# NPC instance used for multiplayer friend character
 # Options: "CH" (default), "PC_HERO", etc.
 # This must match the instance defined in your Gothic scripts
-friendInstanceId = "CH"
+friendInstance = "CH"
 
 # ============================================================================
 # APPEARANCE CUSTOMIZATION
 # ============================================================================
 [appearance]
-# Body texture number
-bodyTextVarNr = 9
+# Body model filename (without extension)
+# Available options:
+# "HUM_BODY_NAKED0" for Male
+# "HUM_BODY_BABE0" for Female
+bodyModel = "HUM_BODY_NAKED0"
 
-# Head texture number
-headVarNr = 18
+# Body texture number
+# Gothic II defaults: 9
+# Gothic I defaults: 4
+bodyTex = 9
 
 # Head model filename (without extension)
 # Common options:
@@ -49,10 +54,15 @@ headVarNr = 18
 # "HUM_HEAD_PSIONIC"
 headModel = "HUM_HEAD_PONY"
 
+# Head texture number
+# Gothic II defaults: 18
+# Gothic I defaults: 9
+headTex = 18
+
 # Skin color (Gothic 1 only)
 # Valid range: 0-3
 # Uncomment the line below if you're playing Gothic 1
-# skinColorG1 = 1
+#skinColor = 1
 
 # ============================================================================
 # GAMEPLAY SETTINGS

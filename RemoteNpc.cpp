@@ -4,8 +4,8 @@ namespace GOTHIC_ENGINE {
     public:
         string name;
         string playerNickname = "";
-        int playerHeadVarNr;
-        int playerBodyTextVarNr;
+        int playerHeadTex;
+        int playerBodyTex;
         oCNpc* npc = NULL;
         bool destroyed = false;
         bool isSpawned = false;
@@ -179,12 +179,12 @@ namespace GOTHIC_ENGINE {
                 auto y = update.initNpc.y;
                 auto z = update.initNpc.z;
                 auto nickname = update.initNpc.nickname;
-                auto headNumber = update.initNpc.headVarNr;
-                auto bodyNumber = update.initNpc.bodyTextVarNr;
+                auto headNumber = update.initNpc.HeadTex;
+                auto bodyNumber = update.initNpc.BodyTex;
 
                 playerNickname = nickname.c_str();
-                playerHeadVarNr = headNumber;
-                playerBodyTextVarNr = bodyNumber;
+                playerHeadTex = headNumber;
+                playerBodyTex = bodyNumber;
                 delete lastPositionFromServer;
                 lastPositionFromServer = new zVEC3(x, y, z);
 
@@ -901,7 +901,7 @@ namespace GOTHIC_ENGINE {
             npc->dontWriteIntoArchive = TRUE;
             npc->idx = 69133769;
 
-            npc->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), playerBodyTextVarNr, MyBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), playerHeadVarNr, 0, -1);
+            npc->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), playerBodyTex, MyBodyColor, zSTRING("HUM_HEAD_PONY"), playerHeadTex, 0, -1);
 
 #if ENGINE >= Engine_G2
             npc->SetHitChance(1, 100);

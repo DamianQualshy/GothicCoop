@@ -13,65 +13,41 @@ namespace GOTHIC_ENGINE {
 
         std::string configFilePath = GothicExeFolderPath;
         configFilePath.append("\\GothicCoopConfig.toml");
-        std::ifstream configFile(configFilePath);
-
-        if (configFile.good()) {
-            try {
-                CoopConfig = ParseTomlConfig(configFile);
-            }
-            catch (...) {
-                Message::Error("(Gothic Coop) Invalid config file, please check your GothicCoopConfig.toml file!");
-                exit(1);
-            }
-        }
-        else {
-            Message::Error("(Gothic Coop) No config file found!");
-            Message::Error(configFilePath.c_str());
-            exit(1);
+        bool loadedConfig = CoopConfig.LoadFromFile(configFilePath, true);
+        if (!loadedConfig) {
+            Message::Error("(Gothic Coop) Config file missing or invalid. Defaults will be used.");
         }
     }
 
     void Game_Init() {
         MainThreadId = GetCurrentThreadId();
-        ToggleGameLogKey = ReadConfigKey("controls", "toggleGameLogKey", "KEY_P");
-        ToggleGameStatsKey = ReadConfigKey("controls", "toggleGameStatsKey", "KEY_O");
-        StartServerKey = ReadConfigKey("controls", "startServerKey", "KEY_F1");
-        StartConnectionKey = ReadConfigKey("controls", "startConnectionKey", "KEY_F2");
-        ReinitPlayersKey = ReadConfigKey("controls", "reinitPlayersKey", "KEY_F3");
-        RevivePlayerKey = ReadConfigKey("controls", "revivePlayerKey", "KEY_F4");
+        ToggleGameLogKey = CoopConfig.ToggleGameLogKeyCode();
+        ToggleGameStatsKey = CoopConfig.ToggleGameStatsKeyCode();
+        StartServerKey = CoopConfig.StartServerKeyCode();
+        StartConnectionKey = CoopConfig.StartConnectionKeyCode();
+        ReinitPlayersKey = CoopConfig.ReinitPlayersKeyCode();
+        RevivePlayerKey = CoopConfig.RevivePlayerKeyCode();
 
-        ConnectionPort = ReadConfigInt("connection", "port", ConnectionPort);
-        MyBodyTextVarNr = ReadConfigInt("appearance", "bodyTextVarNr", MyBodyTextVarNr);
-        MyHeadVarNr = ReadConfigInt("appearance", "headVarNr", MyHeadVarNr);
+        ConnectionPort = CoopConfig.ConnectionPort();
+        MyBodyModel = CoopConfig.BodyModel();
+        MyBodyTex = CoopConfig.BodyTex();
+        MyHeadModel = CoopConfig.HeadModel();
+        MyHeadTex = CoopConfig.HeadTex();
 #if ENGINE < Engine_G2
-        MyBodyTexColorNr = ReadConfigInt("appearance", "skinColorG1", MyBodyTexColorNr);
+        MyBodyColor = CoopConfig.BodyColor();
 #endif
-        PlayersDamageMultipler = ReadConfigInt("gameplay", "playersDamageMultiplier", PlayersDamageMultipler);
-        NpcsDamageMultipler = ReadConfigInt("gameplay", "npcsDamageMultiplier", NpcsDamageMultipler);
+        PlayersDamageMultipler = CoopConfig.PlayersDamageMultiplier();
+        NpcsDamageMultipler = CoopConfig.NpcsDamageMultiplier();
 
-        auto friendInstanceId = ReadConfigString("player", "friendInstanceId", "");
-        if (!friendInstanceId.empty()) {
-            auto stdStringFriendInstanceId = friendInstanceId;
-            std::transform(stdStringFriendInstanceId.begin(), stdStringFriendInstanceId.end(), stdStringFriendInstanceId.begin(), ::tolower);
-            FriendInstanceId = string(stdStringFriendInstanceId.c_str()).ToChar();
+        auto friendInstance = CoopConfig.FriendInstance();
+        if (!friendInstance.empty()) {
+            auto stdStringFriendInstance = friendInstance;
+            std::transform(stdStringFriendInstance.begin(), stdStringFriendInstance.end(), stdStringFriendInstance.begin(), ::tolower);
+            FriendInstance = string(stdStringFriendInstance.c_str()).ToChar();
         }
-        auto nickname = ReadConfigString("player", "nickname", "");
+        auto nickname = CoopConfig.Nickname();
         if (!nickname.empty()) {
             MyNickname = string(nickname.c_str()).ToChar();
-        }
-
-        auto editModeValue = ReadConfigString("gameplay", "editmode", "");
-        if (editModeValue.empty()) {
-            editModeValue = ReadConfigString("", "editmode", "");
-        }
-        if (!editModeValue.empty()) {
-            auto editModeValueString = string(editModeValue.c_str());
-            if (editModeValueString.Compare("MARVIN")) {
-                WorldEditMode = true;
-                Thread  t;
-                ClientThread = &t;
-                ChatLog("World edit mode is activated!");
-            }
         }
     }
 
@@ -143,7 +119,7 @@ namespace GOTHIC_ENGINE {
         }
 
         PluginState = "KeysPressedChecks";
-        if (!IsPlayerTalkingWithAnybody() && !WorldEditMode) {
+        if (!IsPlayerTalkingWithAnybody()) {
             if (zinput->KeyToggled(StartServerKey) && !ServerThread && !ClientThread) {
                 wchar_t mappedPort[1234];
                 std::wcsncpy(mappedPort, L"UDP", 1234);
@@ -154,7 +130,7 @@ namespace GOTHIC_ENGINE {
                 t.Detach();
                 ServerThread = &t;
                 MyselfId = "HOST";
-                player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTextVarNr, MyBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), MyHeadVarNr, 0, -1);
+                player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTex, MyBodyColor, zSTRING("HUM_HEAD_PONY"), MyHeadTex, 0, -1);
             }
 
             if (zinput->KeyToggled(StartConnectionKey) && !ServerThread) {
@@ -168,7 +144,7 @@ namespace GOTHIC_ENGINE {
 
                     ogame->SetTime(ogame->GetWorldTimer()->GetDay(), 12, 00);
                     rtnMan->RestartRoutines();
-                    player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTextVarNr, MyBodyTexColorNr, zSTRING("HUM_HEAD_PONY"), MyHeadVarNr, 0, -1);
+                    player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTex, MyBodyColor, zSTRING("HUM_HEAD_PONY"), MyHeadTex, 0, -1);
                 }
                 else {
                     if (IsCoopPaused) {
@@ -193,42 +169,6 @@ namespace GOTHIC_ENGINE {
                         SyncNpcs[name]->ReinitCoopFriendNpc();
                     }
                 }
-            }
-        }
-
-        if (WorldEditMode) {
-            if (zinput->KeyToggled(StartServerKey)) {
-                if (player->GetObjectName() == "PC_HERO") {
-                    return;
-                }
-
-                auto currentNpc = player;
-                Myself->npc->SetAsPlayer();
-
-                ogame->spawnman->SpawnNpc(currentNpc, currentNpc->GetPositionWorld(), 0.f);
-                ChatLog(string::Combine("%s was added to the world!", string(currentNpc->GetObjectName())));
-            }
-
-            if (zinput->KeyToggled(RevivePlayerKey)) {
-                if (player->GetObjectName() == "PC_HERO") {
-                    return;
-                }
-
-                auto currentNpc = player;
-                Myself->npc->SetAsPlayer();
-
-                ogame->spawnman->DeleteNpc(currentNpc);
-                ogame->GetGameWorld()->RemoveVob(currentNpc);
-
-                ChatLog(string::Combine("%s was removed from the world!", string(currentNpc->GetObjectName())));
-            }
-
-            if (zinput->KeyToggled(ToggleGameLogKey)) {
-                if (player->GetObjectName() == "PC_HERO") {
-                    return;
-                }
-
-                Myself->npc->SetAsPlayer();
             }
         }
 
@@ -305,12 +245,12 @@ namespace GOTHIC_ENGINE {
     void Game_LoadEnd_SaveGame() {
         LoadEnd();
 
-        auto coopFriendInstanceId = GetFriendDefaultInstanceId();
+        auto coopFriendInstance = GetFriendDefaultInstanceId();
         auto* list = ogame->GetGameWorld()->voblist_npcs->next;
 
         while (list) {
             auto npc = list->data;
-            if (npc->GetInstance() == coopFriendInstanceId && npc->GetAttribute(NPC_ATR_STRENGTH) == COOP_MAGIC_NUMBER) {
+            if (npc->GetInstance() == coopFriendInstance && npc->GetAttribute(NPC_ATR_STRENGTH) == COOP_MAGIC_NUMBER) {
                 ogame->spawnman->DeleteNpc(npc);
             }
             list = list->next;

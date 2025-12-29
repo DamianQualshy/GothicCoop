@@ -19,7 +19,7 @@ namespace GOTHIC_ENGINE {
         ENetAddress address;
         ENetEvent event;
         ENetPeer* peer;
-        auto serverIp = ReadConfigString("connection", "server", "localhost");
+        auto serverIp = CoopConfig.ConnectionServer();
         enet_address_set_host(&address, serverIp.c_str());
         address.port = ConnectionPort;
         peer = enet_host_connect(client, &address, 2, 0);

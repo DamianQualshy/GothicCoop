@@ -1,128 +1,6 @@
-#include <stdexcept>
+#include <fstream>
 
 namespace GOTHIC_ENGINE {
-    static std::string TrimWhitespace(const std::string& text) {
-        const auto first = text.find_first_not_of(" \t\r\n");
-        if (first == std::string::npos) {
-            return "";
-        }
-        const auto last = text.find_last_not_of(" \t\r\n");
-        return text.substr(first, last - first + 1);
-    }
-
-    static std::string StripTomlComment(const std::string& text) {
-        bool inQuotes = false;
-        for (size_t i = 0; i < text.size(); i++) {
-            if (text[i] == '"' && (i == 0 || text[i - 1] != '\\')) {
-                inQuotes = !inQuotes;
-                continue;
-            }
-
-            if (text[i] == '#' && !inQuotes) {
-                return text.substr(0, i);
-            }
-        }
-
-        return text;
-    }
-
-    json ParseTomlConfig(std::istream& input) {
-        json config = json::object();
-        std::string line;
-        std::string currentSection;
-        int lineNumber = 0;
-
-        while (std::getline(input, line)) {
-            lineNumber += 1;
-            auto cleaned = TrimWhitespace(StripTomlComment(line));
-            if (cleaned.empty()) {
-                continue;
-            }
-
-            if (cleaned.front() == '[' && cleaned.back() == ']') {
-                currentSection = TrimWhitespace(cleaned.substr(1, cleaned.size() - 2));
-                if (currentSection.empty()) {
-                    throw std::runtime_error("TOML parsing error: empty section name on line " + std::to_string(lineNumber));
-                }
-                continue;
-            }
-
-            auto separator = cleaned.find('=');
-            if (separator == std::string::npos) {
-                throw std::runtime_error("TOML parsing error: missing '=' on line " + std::to_string(lineNumber));
-            }
-
-            auto key = TrimWhitespace(cleaned.substr(0, separator));
-            auto valueRaw = TrimWhitespace(cleaned.substr(separator + 1));
-
-            if (key.empty() || valueRaw.empty()) {
-                throw std::runtime_error("TOML parsing error: invalid key/value on line " + std::to_string(lineNumber));
-            }
-
-            json value;
-            if (valueRaw.front() == '"' && valueRaw.back() == '"' && valueRaw.size() >= 2) {
-                value = valueRaw.substr(1, valueRaw.size() - 2);
-            }
-            else {
-                try {
-                    value = std::stoi(valueRaw);
-                }
-                catch (...) {
-                    value = valueRaw;
-                }
-            }
-
-            if (currentSection.empty()) {
-                config[key] = value;
-            }
-            else {
-                config[currentSection][key] = value;
-            }
-        }
-
-        return config;
-    }
-
-    static bool TryReadConfigValue(const std::string& section, const std::string& key, json& valueOut) {
-        if (section.empty()) {
-            if (!CoopConfig.contains(key)) {
-                return false;
-            }
-            valueOut = CoopConfig[key];
-            return true;
-        }
-
-        if (!CoopConfig.contains(section)) {
-            return false;
-        }
-
-        auto& sectionConfig = CoopConfig[section];
-        if (!sectionConfig.contains(key)) {
-            return false;
-        }
-
-        valueOut = sectionConfig[key];
-        return true;
-    }
-
-    std::string ReadConfigString(const std::string& section, const std::string& key, const std::string& defaultValue) {
-        json value;
-        if (TryReadConfigValue(section, key, value) && value.is_string()) {
-            return value.get<std::string>();
-        }
-
-        return defaultValue;
-    }
-
-    int ReadConfigInt(const std::string& section, const std::string& key, int defaultValue) {
-        json value;
-        if (TryReadConfigValue(section, key, value) && value.is_number_integer()) {
-            return value.get<int>();
-        }
-
-        return defaultValue;
-    }
-
     void CoopLog(std::string l)
     {
         std::ofstream CoopLog(GothicCoopLogPath, std::ios_base::app | std::ios_base::out);
@@ -208,12 +86,6 @@ namespace GOTHIC_ENGINE {
         }
         return rotx;
     };
-
-    int ReadConfigKey(const std::string& section, const std::string& key, string _default) {
-        auto stringKey = string(ReadConfigString(section, key, _default.ToChar()).c_str()).ToChar();
-
-        return GetEmulationKeyCode(stringKey);
-    }
 
     bool IsPlayerTalkingWithAnybody() {
         return ogame->GetCameraAI()->GetMode().Compare("CAMMODDIALOG") == 0;
@@ -356,7 +228,7 @@ namespace GOTHIC_ENGINE {
     }
 
     static int GetFriendDefaultInstanceId() {
-        auto instId = parser->GetIndex(FriendInstanceId);
+        auto instId = parser->GetIndex(FriendInstance);
 
         return instId;
     }

@@ -4,10 +4,6 @@ namespace GOTHIC_ENGINE {
     void GameStatsLoop() {
         PluginState = "GameStatsLoop";
 
-        if (WorldEditMode) {
-            return;
-        }
-
         if (zinput->KeyToggled(ToggleGameStatsKey)) {
             displayNetworkStats = !displayNetworkStats;
             GameChat->Clear();

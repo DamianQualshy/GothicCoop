@@ -407,8 +407,8 @@ namespace GOTHIC_ENGINE {
                     packet.initNpc.x = lastPosition.n[0];
                     packet.initNpc.y = lastPosition.n[1];
                     packet.initNpc.z = lastPosition.n[2];
-                    packet.initNpc.bodyTextVarNr = MyBodyTextVarNr;
-                    packet.initNpc.headVarNr = MyHeadVarNr;
+                    packet.initNpc.BodyTex = MyBodyTex;
+                    packet.initNpc.HeadTex = MyHeadTex;
                     break;
                 }
                 case SYNC_POS:
