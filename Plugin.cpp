@@ -130,7 +130,7 @@ namespace GOTHIC_ENGINE {
                 t.Detach();
                 ServerThread = &t;
                 MyselfId = "HOST";
-                player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTex, MyBodyColor, zSTRING("HUM_HEAD_PONY"), MyHeadTex, 0, -1);
+                player->SetAdditionalVisuals(zSTRING(MyBodyModel.c_str()), MyBodyTex, MyBodyColor, zSTRING(MyHeadModel.c_str()), MyHeadTex, 0, -1);
             }
 
             if (zinput->KeyToggled(StartConnectionKey) && !ServerThread) {
@@ -144,7 +144,7 @@ namespace GOTHIC_ENGINE {
 
                     ogame->SetTime(ogame->GetWorldTimer()->GetDay(), 12, 00);
                     rtnMan->RestartRoutines();
-                    player->SetAdditionalVisuals(zSTRING("hum_body_Naked0"), MyBodyTex, MyBodyColor, zSTRING("HUM_HEAD_PONY"), MyHeadTex, 0, -1);
+                    player->SetAdditionalVisuals(zSTRING(MyBodyModel.c_str()), MyBodyTex, MyBodyColor, zSTRING(MyHeadModel.c_str()), MyHeadTex, 0, -1);
                 }
                 else {
                     if (IsCoopPaused) {

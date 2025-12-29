@@ -29,8 +29,11 @@ namespace GOTHIC_ENGINE {
         float x = 0.0f;
         float y = 0.0f;
         float z = 0.0f;
-        int bodyTextVarNr = 0;
-        int headVarNr = 0;
+        std::string bodyModel;
+        int BodyTex = 0;
+        int BodyColor = 0;
+        std::string headModel;
+        int HeadTex = 0;
     };
 
     struct SyncPosPayload {
@@ -177,7 +180,7 @@ namespace GOTHIC_ENGINE {
         Server,
     };
 
-    constexpr std::uint8_t kNetworkPacketVersion = 1;
+    constexpr std::uint8_t kNetworkPacketVersion = 2;
     constexpr std::size_t kMaxPacketBytes = 16384;
     constexpr std::size_t kMaxNameLength = 64;
     constexpr std::size_t kMaxNicknameLength = 32;
@@ -186,6 +189,8 @@ namespace GOTHIC_ENGINE {
     constexpr std::size_t kMaxOverlayCount = 96;
     constexpr std::size_t kMaxSpellCastCount = 32;
     constexpr std::size_t kMaxAttackCount = 32;
+    constexpr int kMinSkinColor = 0;
+    constexpr int kMaxSkinColor = 3;
 
     static bool IsFinite(float value) {
         return std::isfinite(value);
@@ -417,8 +422,17 @@ namespace GOTHIC_ENGINE {
                 writer.writeFloat(packet.stateUpdate.initNpc.x);
                 writer.writeFloat(packet.stateUpdate.initNpc.y);
                 writer.writeFloat(packet.stateUpdate.initNpc.z);
-                writer.writeI32(packet.stateUpdate.initNpc.bodyTextVarNr);
-                writer.writeI32(packet.stateUpdate.initNpc.headVarNr);
+                if (!writer.writeString(packet.stateUpdate.initNpc.bodyModel, kMaxInstanceNameLength)) {
+                    error = "Init body model too long.";
+                    return false;
+                }
+                writer.writeI32(packet.stateUpdate.initNpc.BodyTex);
+                writer.writeI32(packet.stateUpdate.initNpc.BodyColor);
+                if (!writer.writeString(packet.stateUpdate.initNpc.headModel, kMaxInstanceNameLength)) {
+                    error = "Init head model too long.";
+                    return false;
+                }
+                writer.writeI32(packet.stateUpdate.initNpc.HeadTex);
                 break;
             case SYNC_POS:
                 writer.writeFloat(packet.stateUpdate.pos.x);
@@ -677,14 +691,21 @@ namespace GOTHIC_ENGINE {
                     error = "Invalid init position.";
                     return false;
                 }
-                if (!reader.readI32(out.stateUpdate.initNpc.bodyTextVarNr)
-                    || !reader.readI32(out.stateUpdate.initNpc.headVarNr)) {
+                if (!ReadSanitizedText(reader, out.stateUpdate.initNpc.bodyModel, kMaxInstanceNameLength, mode == PacketDecodeMode::Server)) {
+                    error = "Invalid body model.";
+                    return false;
+                }
+                if (!reader.readI32(out.stateUpdate.initNpc.BodyTex)
+                    || !reader.readI32(out.stateUpdate.initNpc.BodyColor)
+                    || !ReadSanitizedText(reader, out.stateUpdate.initNpc.headModel, kMaxInstanceNameLength, mode == PacketDecodeMode::Server)
+                    || !reader.readI32(out.stateUpdate.initNpc.HeadTex)) {
                     error = "Invalid init appearance.";
                     return false;
                 }
                 if (!ValidateRange(instanceId, 1, 100000)
-                    || !ValidateRange(out.stateUpdate.initNpc.bodyTextVarNr, 0, 200)
-                    || !ValidateRange(out.stateUpdate.initNpc.headVarNr, 0, 200)
+                    || !ValidateRange(out.stateUpdate.initNpc.BodyTex, 0, 200)
+                    || !ValidateRange(out.stateUpdate.initNpc.BodyColor, kMinSkinColor, kMaxSkinColor)
+                    || !ValidateRange(out.stateUpdate.initNpc.HeadTex, 0, 200)
                     || !ValidateRangeFloat(out.stateUpdate.initNpc.x, -100000.0f, 100000.0f)
                     || !ValidateRangeFloat(out.stateUpdate.initNpc.y, -100000.0f, 100000.0f)
                     || !ValidateRangeFloat(out.stateUpdate.initNpc.z, -100000.0f, 100000.0f)) {

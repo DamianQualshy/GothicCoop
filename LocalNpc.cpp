@@ -407,8 +407,11 @@ namespace GOTHIC_ENGINE {
                     packet.initNpc.x = lastPosition.n[0];
                     packet.initNpc.y = lastPosition.n[1];
                     packet.initNpc.z = lastPosition.n[2];
+                    packet.initNpc.bodyModel = MyBodyModel;
                     packet.initNpc.BodyTex = MyBodyTex;
+                    packet.initNpc.headModel = MyHeadModel;
                     packet.initNpc.HeadTex = MyHeadTex;
+                    packet.initNpc.BodyColor = MyBodyColor;
                     break;
                 }
                 case SYNC_POS:
