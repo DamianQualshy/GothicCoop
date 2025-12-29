@@ -386,134 +386,123 @@ namespace GOTHIC_ENGINE {
         void PackUpdate() {
             for each (auto type in pendingUpdates)
             {
-                json j;
-                j["type"] = type;
-                j["id"] = name;
-                this->AddUpdatePayload(type, j);
-                ReadyToSendJsons.enqueue(j);
+                NetworkPacket packet;
+                packet.type = PacketType::PlayerStateUpdate;
+                packet.senderId = ServerThread ? std::string(name.ToChar()) : std::string();
+                packet.stateUpdate.updateType = static_cast<UpdateType>(type);
+                this->AddUpdatePayload(type, packet.stateUpdate);
+                ReadyToSendPackets.enqueue(packet);
             }
 
             pendingUpdates.clear();
         }
 
-        void AddUpdatePayload(int type, json& j) {
+        void AddUpdatePayload(int type, PlayerStateUpdatePacket& packet) {
             switch (type)
             {
                 case INIT_NPC:
                 {
-                    j["instanceId"] = parser->GetIndex(npc->GetInstanceName());
-                    j["nickname"] = MyNickname;
-                    j["x"] = lastPosition.n[0];
-                    j["y"] = lastPosition.n[1];
-                    j["z"] = lastPosition.n[2];
-                    j["bodyTextVarNr"] = MyBodyTextVarNr;
-                    j["headVarNr"] = MyHeadVarNr;
+                    packet.initNpc.instanceId = parser->GetIndex(npc->GetInstanceName());
+                    packet.initNpc.nickname = MyNickname.ToChar();
+                    packet.initNpc.x = lastPosition.n[0];
+                    packet.initNpc.y = lastPosition.n[1];
+                    packet.initNpc.z = lastPosition.n[2];
+                    packet.initNpc.bodyTextVarNr = MyBodyTextVarNr;
+                    packet.initNpc.headVarNr = MyHeadVarNr;
                     break;
                 }
                 case SYNC_POS:
                 {
-                    j["x"] = lastPosition.n[0];
-                    j["y"] = lastPosition.n[1];
-                    j["z"] = lastPosition.n[2];
+                    packet.pos.x = lastPosition.n[0];
+                    packet.pos.y = lastPosition.n[1];
+                    packet.pos.z = lastPosition.n[2];
                     break;
                 }
                 case SYNC_HEADING:
                 {
-                    j["h"] = lastHeading;
+                    packet.heading.heading = lastHeading;
                     break;
                 }
                 case SYNC_ANIMATION:
                 {
-                    j["a"] = newAnimIds.back();
+                    packet.animation.animationId = newAnimIds.back();
                     newAnimIds.pop_back();
                     break;
                 }
                 case SYNC_WEAPON_MODE:
                 {
-                    j["wm"] = lastWeaponMode;
+                    packet.weaponMode.weaponMode = lastWeaponMode;
                     break;
                 }
                 case SYNC_MAGIC_SETUP:
                 {
-                    j["spell"] = lastSpellInstanceName;
+                    packet.magicSetup.spellInstanceName = lastSpellInstanceName.ToChar();
                     break;
                 }
                 case SYNC_SPELL_CAST:
                 {
                     auto casts = nlohmann::json::array();
                     for each (auto sc in spellCastsToSync) {
-                        nlohmann::json cast;
-                        cast["target"] = sc.targetNpcUniqueName;
-                        cast["spellInstanceId"] = sc.spellInstanceId;
-                        cast["spellLevel"] = sc.spellLevel;
-                        cast["spellCharge"] = sc.spellCharge;
-                        casts.push_back(cast);
+                        SpellCastInfo cast;
+                        cast.target = sc.targetNpcUniqueName.ToChar();
+                        cast.spellInstanceId = sc.spellInstanceId;
+                        cast.spellLevel = sc.spellLevel;
+                        cast.spellCharge = sc.spellCharge;
+                        packet.spellCasts.casts.push_back(cast);
                     }
 
-                    j["casts"] = casts;
                     spellCastsToSync.clear();
                     break;
                 }
                 case SYNC_ARMOR:
                 {
-                    j["armor"] = lastArmorName;
+                    packet.armor.armor = lastArmorName.ToChar();
                     break;
                 }
                 case SYNC_WEAPONS:
                 {
-                    j["w1"] = lastWeapon1Name;
-                    j["w2"] = lastWeapon2Name;
+                    packet.weapons.weapon1 = lastWeapon1Name.ToChar();
+                    packet.weapons.weapon2 = lastWeapon2Name.ToChar();
                     break;
                 }
                 case SYNC_HP:
                 {
-                    j["hp"] = lastSyncHp;
-                    j["hp_max"] = lastSyncMaxHp;
+                    packet.hp.hp = lastSyncHp;
+                    packet.hp.hpMax = lastSyncMaxHp;
                     break;
                 }
                 case SYNC_BODYSTATE:
                 {
-                    j["bs"] = lastBodyState;
+                    packet.bodyState.bodyState = lastBodyState;
                     break;
                 }
                 case SYNC_OVERLAYS:
                 {
-                    auto overlays = nlohmann::json::array();
-
                     for (int i = 0; i < pArrOverlays.GetNumInList(); i++)
                     {
-                        nlohmann::json overlay;
-                        overlay["over"] = pArrOverlays.GetSafe(i);
-                        overlays.push_back(overlay);
+                        packet.overlays.overlayIds.push_back(pArrOverlays.GetSafe(i));
                     }
     
-                    j["overlays"] = overlays;
                     break;
                 }
                 case SYNC_PROTECTIONS:
                 {
-                    j["p0"] = lastProtections[0];
-                    j["p1"] = lastProtections[1];
-                    j["p2"] = lastProtections[2];
-                    j["p3"] = lastProtections[3];
-                    j["p4"] = lastProtections[4];
-                    j["p5"] = lastProtections[5];
-                    j["p6"] = lastProtections[6];
-                    j["p7"] = lastProtections[7];
+                    for (int i = 0; i < 8; i++) {
+                        packet.protections.protections[i] = lastProtections[i];
+                    }
                     break;
                 }
                 case SYNC_TALENTS:
                 {
-                    j["t0"] = lastTalents[0];
-                    j["t1"] = lastTalents[1];
-                    j["t2"] = lastTalents[2];
-                    j["t3"] = lastTalents[3];
+                    for (int i = 0; i < 4; i++) {
+                        packet.talents.talents[i] = lastTalents[i];
+                    }
                     break;
                 }
                 case SYNC_HAND:
                 {
-                    j["left"] = lastLeftHandInstanceName;
-                    j["right"] = lastRightHandInstanceName;
+                    packet.hand.leftItem = lastLeftHandInstanceName.ToChar();
+                    packet.hand.rightItem = lastRightHandInstanceName.ToChar();
                     break;
                 }
                 case SYNC_TIME:
@@ -521,31 +510,29 @@ namespace GOTHIC_ENGINE {
                     int _a, h, m;
                     ogame->GetTime(_a, h, m);
 
-                    j["h"] = h;
-                    j["m"] = m;
+                    packet.time.hour = h;
+                    packet.time.minute = m;
                     break;
                 }
                 case SYNC_REVIVED:
                 {
-                    j["name"] = revivedFriend;
+                    packet.revived.name = revivedFriend.ToChar();
                     revivedFriend = "";
                     break;
                 }
                 case SYNC_ATTACKS:
                 {
-                    auto attacks = nlohmann::json::array();
                     for each (auto at in hitsToSync) {
-                        nlohmann::json att;
-                        att["target"] = at.npcUniqueName;
-                        att["damage"] = at.damage;
-                        att["isUnconscious"] = at.isUnconscious;
-                        att["isDead"] = at.isDead;
-                        att["isFinish"] = at.isFinish;
-                        att["damageMode"] = at.damageMode;
-                        attacks.push_back(att);
+                        AttackInfo attack;
+                        attack.target = at.npcUniqueName.ToChar();
+                        attack.damage = at.damage;
+                        attack.isUnconscious = at.isUnconscious;
+                        attack.isDead = at.isDead;
+                        attack.isFinish = at.isFinish;
+                        attack.damageMode = at.damageMode;
+                        packet.attacks.attacks.push_back(attack);
                     }
 
-                    j["att"] = attacks;
                     hitsToSync.clear();
                     break;
                 }
@@ -553,10 +540,10 @@ namespace GOTHIC_ENGINE {
                 {
                     if (pItemDropped && itemDropReady)
                     {
-                        j["itemDropped"] = pItemDropped->GetInstanceName();
-                        j["count"] = pItemDropped->amount;
-                        j["flags"] = pItemDropped->flags;
-                        j["itemUniqName"] = pItemDropped->GetObjectName();
+                        packet.dropItem.itemDropped = pItemDropped->GetInstanceName();
+                        packet.dropItem.count = pItemDropped->amount;
+                        packet.dropItem.flags = pItemDropped->flags;
+                        packet.dropItem.itemUniqueName = pItemDropped->GetObjectName();
 
                         itemDropReady = false;
                     }
@@ -566,13 +553,13 @@ namespace GOTHIC_ENGINE {
                 {
                     if (pItemTaken)
                     {
-                        j["itemDropped"] = pItemTaken->GetInstanceName();
-                        j["count"] = pItemTaken->amount;
-                        j["flags"] = pItemTaken->flags;
-                        j["uniqName"] = pItemTaken->GetObjectName();
-                        j["x"] = pItemTakenPos.n[0];
-                        j["y"] = pItemTakenPos.n[1];
-                        j["z"] = pItemTakenPos.n[2];
+                        packet.takeItem.itemDropped = pItemTaken->GetInstanceName();
+                        packet.takeItem.count = pItemTaken->amount;
+                        packet.takeItem.flags = pItemTaken->flags;
+                        packet.takeItem.uniqueName = pItemTaken->GetObjectName();
+                        packet.takeItem.x = pItemTakenPos.n[0];
+                        packet.takeItem.y = pItemTakenPos.n[1];
+                        packet.takeItem.z = pItemTakenPos.n[2];
 
                         pItemTaken->RemoveVobFromWorld();
                         pItemTaken = NULL;

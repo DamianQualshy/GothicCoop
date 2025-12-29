@@ -19,8 +19,8 @@ namespace GOTHIC_ENGINE {
 
         if (displayNetworkStats) {
             GameChat->Clear();
-            ChatLog("readyToSendJsons:");
-            ChatLog(ReadyToSendJsons.size());
+            ChatLog("readyToSendPackets:");
+            ChatLog(ReadyToSendPackets.size());
             ChatLog("readyToBeReceivedPackets:");
             ChatLog(ReadyToBeReceivedPackets.size());
             ChatLog("possition:");

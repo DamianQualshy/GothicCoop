@@ -14,8 +14,8 @@ namespace GOTHIC_ENGINE {
 		if (!removedNpc) {
 			return;
 		}
-		json j; 
-		j["type"] = DESTROY_NPC;
-		removedNpc->localUpdates.push_back(j);
+		PlayerStateUpdatePacket update;
+		update.updateType = DESTROY_NPC;
+		removedNpc->localUpdates.push_back(update);
 	}
 }

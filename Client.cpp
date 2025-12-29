@@ -50,12 +50,17 @@ namespace GOTHIC_ENGINE {
                     ReadyToBeReceivedPackets.enqueue(event);
                 }
 
-                if (!ReadyToSendJsons.isEmpty()) {
-                    auto rawJson = ReadyToSendJsons.dequeue();
-                    auto bjson = json::to_bson(rawJson);
+                if (!ReadyToSendPackets.isEmpty()) {
+                    auto outboundPacket = ReadyToSendPackets.dequeue();
+                    std::vector<std::uint8_t> payload;
+                    std::string error;
+                    if (!SerializeNetworkPacket(outboundPacket, payload, error)) {
+                        ChatLog(string::Combine("Failed to serialize packet: %s", string(error.c_str())));
+                        continue;
+                    }
 
-                    ENetPacket* packet = enet_packet_create(&bjson[0], bjson.size(), PacketFlag(rawJson));
-                    enet_peer_send(peer, PacketChannel(rawJson), packet);
+                    ENetPacket* packet = enet_packet_create(payload.data(), payload.size(), PacketFlag(outboundPacket));
+                    enet_peer_send(peer, PacketChannel(outboundPacket), packet);
                 }
             }
             catch (std::exception& ex) {

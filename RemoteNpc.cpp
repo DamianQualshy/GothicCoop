@@ -11,7 +11,7 @@ namespace GOTHIC_ENGINE {
         bool isSpawned = false;
         bool hasNpc = false;
         bool hasModel = false;
-        std::vector<json> localUpdates;
+        std::vector<PlayerStateUpdatePacket> localUpdates;
 
         zVEC3* lastPositionFromServer = NULL;
         float lastHeadingFromServer = -1;
@@ -59,13 +59,8 @@ namespace GOTHIC_ENGINE {
                 auto update = localUpdates.front();
                 localUpdates.erase(localUpdates.begin());
 
-                if (!update.contains("type") || !update["type"].is_number_integer()) {
-                    ChatLog("Invalid NPC update packet (type).");
-                    continue;
-                }
-
-                auto type = update["type"].get<int>();
-                PluginState = "Updating NPC " + name + " TYPE: " + type;
+                auto type = update.updateType;
+                PluginState = "Updating NPC " + name + " TYPE: " + static_cast<int>(type);
 
                 switch (type) {
                 case INIT_NPC:
@@ -178,14 +173,14 @@ namespace GOTHIC_ENGINE {
             UpdateNpcBasedOnLastDataFromServer();
         }
 
-        void UpdateInitialization(json update) {
+        void UpdateInitialization(const PlayerStateUpdatePacket& update) {
             if (npc == NULL) {
-                auto x = update["x"].get<float>();
-                auto y = update["y"].get<float>();
-                auto z = update["z"].get<float>();
-                auto nickname = update["nickname"].get<std::string>();
-                auto headNumber = update["headVarNr"].get<int>();
-                auto bodyNumber = update["bodyTextVarNr"].get<int>();
+                auto x = update.initNpc.x;
+                auto y = update.initNpc.y;
+                auto z = update.initNpc.z;
+                auto nickname = update.initNpc.nickname;
+                auto headNumber = update.initNpc.headVarNr;
+                auto bodyNumber = update.initNpc.bodyTextVarNr;
 
                 playerNickname = nickname.c_str();
                 playerHeadVarNr = headNumber;
@@ -203,10 +198,10 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdatePosition(json update) {
-            auto x = update["x"].get<float>();
-            auto y = update["y"].get<float>();
-            auto z = update["z"].get<float>();
+        void UpdatePosition(const PlayerStateUpdatePacket& update) {
+            auto x = update.pos.x;
+            auto y = update.pos.y;
+            auto z = update.pos.z;
 
             if (CurrentWorldTOTPosition) {
                 auto newPosition = zVEC3(x, y, z);
@@ -222,8 +217,8 @@ namespace GOTHIC_ENGINE {
             lastPositionFromServer = new zVEC3(x, y, z);
         }
 
-        void UpdateAngle(json update) {
-            auto h = update["h"].get<float>();
+        void UpdateAngle(const PlayerStateUpdatePacket& update) {
+            auto h = update.heading.heading;
             lastHeadingFromServer = h;
             if (hasModel) {
                 npc->ResetRotationsWorld();
@@ -231,16 +226,16 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateAnimation(json update) {
+        void UpdateAnimation(const PlayerStateUpdatePacket& update) {
             if (hasModel) {
-                auto a = update["a"].get<int>();
+                auto a = update.animation.animationId;
                 npc->GetModel()->StartAni(a, COOP_MAGIC_NUMBER);
             }
         }
 
-        void UpdateWeaponMode(json update) {
+        void UpdateWeaponMode(const PlayerStateUpdatePacket& update) {
             if (hasModel) {
-                auto wm = update["wm"].get<int>();
+                auto wm = update.weaponMode.weaponMode;
                 lastWeaponMode = wm;
                 npc->SetWeaponMode2(wm);
 
@@ -260,9 +255,9 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateHp(json update) {
-            auto hp = update["hp"].get<int>();
-            auto hpMax = update["hp_max"].get<int>();
+        void UpdateHp(const PlayerStateUpdatePacket& update) {
+            auto hp = update.hp.hp;
+            auto hpMax = update.hp.hpMax;
 
             if (!IsCoopPlayer(name) && hp == 0) {
                 if (hasNpc) {
@@ -284,11 +279,11 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateTalents(json update) {
-            auto t0 = update["t0"].get<int>();
-            auto t1 = update["t1"].get<int>();
-            auto t2 = update["t2"].get<int>();
-            auto t3 = update["t3"].get<int>();
+        void UpdateTalents(const PlayerStateUpdatePacket& update) {
+            auto t0 = update.talents.talents[0];
+            auto t1 = update.talents.talents[1];
+            auto t2 = update.talents.talents[2];
+            auto t3 = update.talents.talents[3];
 
             if (hasNpc) {
                 npc->SetTalentSkill(oCNpcTalent::NPC_TAL_1H, t0);
@@ -298,15 +293,15 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateProtection(json update) {
-            auto p0 = update["p0"].get<int>();
-            auto p1 = update["p1"].get<int>();
-            auto p2 = update["p2"].get<int>();
-            auto p3 = update["p3"].get<int>();
-            auto p4 = update["p4"].get<int>();
-            auto p5 = update["p5"].get<int>();
-            auto p6 = update["p6"].get<int>();
-            auto p7 = update["p7"].get<int>();
+        void UpdateProtection(const PlayerStateUpdatePacket& update) {
+            auto p0 = update.protections.protections[0];
+            auto p1 = update.protections.protections[1];
+            auto p2 = update.protections.protections[2];
+            auto p3 = update.protections.protections[3];
+            auto p4 = update.protections.protections[4];
+            auto p5 = update.protections.protections[5];
+            auto p6 = update.protections.protections[6];
+            auto p7 = update.protections.protections[7];
 
             if (hasNpc) {
                 npc->SetProtectionByIndex(static_cast<oEIndexDamage>(0), p0);
@@ -320,9 +315,9 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateArmor(json update) {
+        void UpdateArmor(const PlayerStateUpdatePacket& update) {
             if (hasNpc) {
-                auto armor = update["armor"].get<std::string>();
+                auto armor = update.armor.armor;
 
                 auto currentArmor = npc->GetEquippedArmor();
                 if (currentArmor) {
@@ -344,20 +339,18 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateBodystate(json update) {
+        void UpdateBodystate(const PlayerStateUpdatePacket& update) {
             if (hasNpc) {
-                auto bs = update["bs"].get<int>();
+                auto bs = update.bodyState.bodyState;
                 npc->SetBodyState(bs);
             }
         }
 
-        void UpdateOverlays(json update) {
+        void UpdateOverlays(const PlayerStateUpdatePacket& update) {
             if (hasNpc) {
-                std::vector<json> overlays = update["overlays"];
                 zCArray<int> overlaysNew;
 
-                for each (auto a in overlays) {
-                    auto overlayId = a["over"].get<int>();
+                for (auto overlayId : update.overlays.overlayIds) {
                     overlaysNew.InsertEnd(overlayId);
                 }
 
@@ -368,9 +361,9 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateMagicSetup(json update) {
+        void UpdateMagicSetup(const PlayerStateUpdatePacket& update) {
             if (hasNpc && hasModel) {
-                auto spellInstanceName = update["spell"].get<std::string>();
+                auto spellInstanceName = update.magicSetup.spellInstanceName;
                 oCMag_Book* book = npc->GetSpellBook();
                 if (book)
                 {
@@ -449,12 +442,12 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateHand(json update) {
+        void UpdateHand(const PlayerStateUpdatePacket& update) {
             if (!hasModel) {
                 return;
             }
-            auto leftItem = update["left"].get<std::string>();
-            auto rightItem = update["right"].get<std::string>();
+            auto leftItem = update.hand.leftItem;
+            auto rightItem = update.hand.rightItem;
 
             auto leftHandItem = npc->GetLeftHand();
             if (leftHandItem)
@@ -495,10 +488,10 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateWeapons(json update) {
+        void UpdateWeapons(const PlayerStateUpdatePacket& update) {
             if (hasModel) {
-                auto weapon1 = update["w1"].get<std::string>();
-                auto weapon2 = update["w2"].get<std::string>();
+                auto weapon1 = update.weapons.weapon1;
+                auto weapon2 = update.weapons.weapon2;
 
                 auto currentWeapon1 = npc->GetEquippedMeleeWeapon();
                 auto currentWeapon2 = npc->GetEquippedRangedWeapon();
@@ -541,7 +534,7 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateSpellCasts(json update) {
+        void UpdateSpellCasts(const PlayerStateUpdatePacket& update) {
             if (!hasModel) {
                 return;
             }
@@ -549,12 +542,11 @@ namespace GOTHIC_ENGINE {
             oCMag_Book* book = npc->GetSpellBook();
             if (book)
             {
-                std::vector<json> casts = update["casts"];
-                for each (auto c in casts) {
-                    auto target = c["target"].get<std::string>();
-                    auto spellInstanceId = c["spellInstanceId"].get<int>();
-                    auto spellLevel = c["spellLevel"].get<int>();
-                    auto spellCharge = c["spellCharge"].get<int>();
+                for (const auto& c : update.spellCasts.casts) {
+                    auto target = c.target;
+                    auto spellInstanceId = c.spellInstanceId;
+                    auto spellLevel = c.spellLevel;
+                    auto spellCharge = c.spellCharge;
 
                     EnsureSpellSetup(spellInstanceId);
                     book = npc->GetSpellBook();
@@ -589,19 +581,18 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateAttacks(json update) {
+        void UpdateAttacks(const PlayerStateUpdatePacket& update) {
             if (!hasModel) {
                 return;
             }
 
-            std::vector<json> atts = update["att"];
-            for each (auto a in atts) {
-                auto target = a["target"].get<std::string>();
-                auto damage = a["damage"].get<float>();
-                auto isUnconscious = a["isUnconscious"].get<int>();
-                auto isFinish = a.value("isFinish", false);
-                auto stillAlive = !a["isDead"].get<bool>();
-                auto damageMode = a["damageMode"].get<unsigned long>();
+            for (const auto& a : update.attacks.attacks) {
+                auto target = a.target;
+                auto damage = a.damage;
+                auto isUnconscious = a.isUnconscious;
+                auto isFinish = a.isFinish;
+                auto stillAlive = !a.isDead;
+                auto damageMode = a.damageMode;
 
                 // attack player (client only, eg. wolf attacks player)
                 if (target.compare(MyselfId) == 0) {
@@ -717,24 +708,16 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateTime(json update) {
+        void UpdateTime(const PlayerStateUpdatePacket& update) {
             if (!IsPlayerTalkingWithAnybody()) {
-                if (!update.contains("h") || !update["h"].is_number_integer() || !update.contains("m") || !update["m"].is_number_integer()) {
-                    ChatLog("Invalid SYNC_TIME packet.");
-                    return;
-                }
-                auto h = update["h"].get<int>();
-                auto m = update["m"].get<int>();
+                auto h = update.time.hour;
+                auto m = update.time.minute;
                 ogame->GetWorldTimer()->SetTime(h, m);
             }
         }
 
-        void UpdateRevived(json update) {
-            if (!update.contains("name") || !update["name"].is_string()) {
-                ChatLog("Invalid SYNC_REVIVED packet.");
-                return;
-            }
-            auto name = update["name"].get<std::string>();
+        void UpdateRevived(const PlayerStateUpdatePacket& update) {
+            auto name = update.revived.name;
 
             if (player->IsDead() && name.compare(MyselfId) == 0) {
                 player->StopFaceAni("T_HURT");
@@ -745,23 +728,15 @@ namespace GOTHIC_ENGINE {
             }
         }
 
-        void UpdateDropItem(json update) {
+        void UpdateDropItem(const PlayerStateUpdatePacket& update) {
             if (!hasModel) {
                 return;
             }
 
-            if (!update.contains("itemDropped") || !update["itemDropped"].is_string()
-                || !update.contains("count") || !update["count"].is_number_integer()
-                || !update.contains("flags") || !update["flags"].is_number_integer()
-                || !update.contains("itemUniqName") || !update["itemUniqName"].is_string()) {
-                ChatLog("Invalid SYNC_DROPITEM packet.");
-                return;
-            }
-
-            auto itemName = update["itemDropped"].get<std::string>();
-            auto count = update["count"].get<int>();
-            auto flags = update["flags"].get<int>();
-            auto itemUniqName = update["itemUniqName"].get<std::string>();
+            auto itemName = update.dropItem.itemDropped;
+            auto count = update.dropItem.count;
+            auto flags = update.dropItem.flags;
+            auto itemUniqName = update.dropItem.itemUniqueName;
 
             int index = parser->GetIndex(itemName.c_str());
 
@@ -781,18 +756,18 @@ namespace GOTHIC_ENGINE {
 
         }
 
-        void UpdateTakeItem(json update) {
+        void UpdateTakeItem(const PlayerStateUpdatePacket& update) {
             if (!hasModel) {
                 return;
             }
 
-            auto itemName = update["itemDropped"].get<std::string>();
-            auto count = update["count"].get<int>();
-            auto flags = update["flags"].get<int>();
-            auto x = update["x"].get<float>();
-            auto y = update["y"].get<float>();
-            auto z = update["z"].get<float>();
-            auto uniqName = update["uniqName"].get<std::string>();
+            auto itemName = update.takeItem.itemDropped;
+            auto count = update.takeItem.count;
+            auto flags = update.takeItem.flags;
+            auto x = update.takeItem.x;
+            auto y = update.takeItem.y;
+            auto z = update.takeItem.z;
+            auto uniqName = update.takeItem.uniqueName;
             auto itemPos = zVEC3(x, y, z);
 
             auto pList = CollectVobsInRadius(itemPos, 2500);

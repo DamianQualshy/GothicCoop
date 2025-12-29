@@ -67,8 +67,8 @@ namespace GOTHIC_ENGINE {
 
     static std::map<string, oCNpc*> KilledByPlayerNpcNames;
 
-    static SafeQueue<json> ReadyToSendJsons;
-    static SafeQueue<json> ReadyToBeDistributedPackets;
+    static SafeQueue<NetworkPacket> ReadyToSendPackets;
+    static SafeQueue<NetworkPacket> ReadyToBeDistributedPackets;
     static SafeQueue<ENetEvent> ReadyToBeReceivedPackets;
     static SafeQueue<PlayerHit> ReadyToSyncDamages;
     static SafeQueue<SpellCast> ReadyToSyncSpellCasts;

@@ -5,6 +5,7 @@
 #pragma region Includes
 #include "SafeQueue.cpp"
 #include "CustomTypes.cpp"
+#include "NetworkPackets.cpp"
 #include "Chat.cpp"
 #include "Utils.cpp"
 #include "Global.cpp"

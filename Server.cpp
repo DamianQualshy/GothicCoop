@@ -29,8 +29,8 @@ namespace GOTHIC_ENGINE {
                 }
 
                 if (!ReadyToBeDistributedPackets.isEmpty()) {
-                    auto jsonPacket = ReadyToBeDistributedPackets.dequeue();
-                    auto playerId = jsonPacket["id"].get<std::string>();
+                    auto networkPacket = ReadyToBeDistributedPackets.dequeue();
+                    auto playerId = networkPacket.senderId;
 
                     for (size_t i = 0; i < server->peerCount; i++) {
                         auto peer = &server->peers[i];
@@ -40,21 +40,31 @@ namespace GOTHIC_ENGINE {
                             continue;
                         }
 
-                        if (!player->friendId.Compare(playerId.c_str())) {
-                            auto bson = json::to_bson(jsonPacket);
+                        if (playerId.empty() || !player->friendId.Compare(playerId.c_str())) {
+                            std::vector<std::uint8_t> payload;
+                            std::string error;
+                            if (!SerializeNetworkPacket(networkPacket, payload, error)) {
+                                ChatLog(string::Combine("Failed to serialize packet: %s", string(error.c_str())));
+                                continue;
+                            }
 
-                            ENetPacket* packet = enet_packet_create(&bson[0], bson.size(), PacketFlag(jsonPacket));
-                            enet_peer_send(peer, PacketChannel(jsonPacket), packet);
+                            ENetPacket* packet = enet_packet_create(payload.data(), payload.size(), PacketFlag(networkPacket));
+                            enet_peer_send(peer, PacketChannel(networkPacket), packet);
                         }
                     }
                 }
 
-                if (!ReadyToSendJsons.isEmpty()) {
-                    auto rawJson = ReadyToSendJsons.dequeue();
-                    auto bson = json::to_bson(rawJson);
+                if (!ReadyToSendPackets.isEmpty()) {
+                    auto outboundPacket = ReadyToSendPackets.dequeue();
+                    std::vector<std::uint8_t> payload;
+                    std::string error;
+                    if (!SerializeNetworkPacket(outboundPacket, payload, error)) {
+                        ChatLog(string::Combine("Failed to serialize packet: %s", string(error.c_str())));
+                        continue;
+                    }
 
-                    ENetPacket* packet = enet_packet_create(&bson[0], bson.size(), PacketFlag(rawJson));
-                    enet_host_broadcast(server, PacketChannel(rawJson), packet);
+                    ENetPacket* packet = enet_packet_create(payload.data(), payload.size(), PacketFlag(outboundPacket));
+                    enet_host_broadcast(server, PacketChannel(outboundPacket), packet);
                 }
             }
             catch (std::exception& ex) {

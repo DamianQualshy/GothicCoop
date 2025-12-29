@@ -227,23 +227,25 @@ namespace GOTHIC_ENGINE {
 		return vobList;
 	}
 
-	ENetPacketFlag PacketFlag(json packet)
+	ENetPacketFlag PacketFlag(const NetworkPacket& packet)
 	{
-		auto updateType = (UpdateType)packet["type"].get<int>();
-
-		if (updateType == SYNC_POS || updateType == SYNC_HEADING) {
-			return ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+		if (packet.type == PacketType::PlayerStateUpdate) {
+			auto updateType = packet.stateUpdate.updateType;
+			if (updateType == SYNC_POS || updateType == SYNC_HEADING) {
+				return ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+			}
 		}
 
 		return ENET_PACKET_FLAG_RELIABLE;
 	}
 
-	int PacketChannel(json packet)
+	int PacketChannel(const NetworkPacket& packet)
 	{
-		auto updateType = (UpdateType)packet["type"].get<int>();
-
-		if (updateType == SYNC_POS || updateType == SYNC_HEADING) {
-			return 1;
+		if (packet.type == PacketType::PlayerStateUpdate) {
+			auto updateType = packet.stateUpdate.updateType;
+			if (updateType == SYNC_POS || updateType == SYNC_HEADING) {
+				return 1;
+			}
 		}
 
 		return 0;
