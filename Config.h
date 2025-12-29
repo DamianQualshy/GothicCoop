@@ -1,4 +1,37 @@
+#ifdef A
+#pragma push_macro("A")
+#undef A
+#define TOMLPP_RESTORE_A
+#endif
+
+#ifdef min
+#pragma push_macro("min")
+#undef min
+#define TOMLPP_RESTORE_MIN
+#endif
+
+#ifdef max
+#pragma push_macro("max")
+#undef max
+#define TOMLPP_RESTORE_MAX
+#endif
+
 #include "dependencies/toml++/toml.hpp"
+
+#ifdef TOMLPP_RESTORE_MAX
+#pragma pop_macro("max")
+#undef TOMLPP_RESTORE_MAX
+#endif
+
+#ifdef TOMLPP_RESTORE_MIN
+#pragma pop_macro("min")
+#undef TOMLPP_RESTORE_MIN
+#endif
+
+#ifdef TOMLPP_RESTORE_A
+#pragma pop_macro("A")
+#undef TOMLPP_RESTORE_A
+#endif
 
 #include <string>
 

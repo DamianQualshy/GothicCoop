@@ -146,12 +146,13 @@ namespace GOTHIC_ENGINE {
             return static_cast<int>(*value);
         }
 
-        template <typename LogFn>
+        template <typename LogFn, typename ValidatorFn>
         std::string ReadKeyString(const toml::table& table,
                                   const char* key,
                                   const std::string& defaultValue,
                                   bool* needsPersist,
-                                  LogFn&& logIssue) {
+                                  LogFn&& logIssue,
+                                  ValidatorFn&& isValidKey) {
             const toml::node* node = FindNode(table, "controls", key);
             if (!node) {
                 logIssue("Missing required key '" + DescribeKey("controls", key) + "', using default.");
@@ -170,7 +171,7 @@ namespace GOTHIC_ENGINE {
                 return defaultValue;
             }
 
-            if (!IsValidKeyCode(*value)) {
+            if (!isValidKey(*value)) {
                 logIssue("Unknown key code '" + *value + "' for key '" + DescribeKey("controls", key) + "', using default.");
                 if (needsPersist) {
                     *needsPersist = true;
@@ -252,12 +253,14 @@ namespace GOTHIC_ENGINE {
         values_.playersDamageMultiplier = ReadInt(config, "gameplay", "playersDamageMultiplier", values_.playersDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
         values_.npcsDamageMultiplier = ReadInt(config, "gameplay", "npcsDamageMultiplier", values_.npcsDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
 
-        values_.toggleGameLogKey = ReadKeyString(config, "toggleGameLogKey", values_.toggleGameLogKey, &needsPersist, logIssue);
-        values_.toggleGameStatsKey = ReadKeyString(config, "toggleGameStatsKey", values_.toggleGameStatsKey, &needsPersist, logIssue);
-        values_.startServerKey = ReadKeyString(config, "startServerKey", values_.startServerKey, &needsPersist, logIssue);
-        values_.startConnectionKey = ReadKeyString(config, "startConnectionKey", values_.startConnectionKey, &needsPersist, logIssue);
-        values_.reinitPlayersKey = ReadKeyString(config, "reinitPlayersKey", values_.reinitPlayersKey, &needsPersist, logIssue);
-        values_.revivePlayerKey = ReadKeyString(config, "revivePlayerKey", values_.revivePlayerKey, &needsPersist, logIssue);
+        auto isValidKey = [this](const std::string& keyValue) { return IsValidKeyCode(keyValue); };
+
+        values_.toggleGameLogKey = ReadKeyString(config, "toggleGameLogKey", values_.toggleGameLogKey, &needsPersist, logIssue, isValidKey);
+        values_.toggleGameStatsKey = ReadKeyString(config, "toggleGameStatsKey", values_.toggleGameStatsKey, &needsPersist, logIssue, isValidKey);
+        values_.startServerKey = ReadKeyString(config, "startServerKey", values_.startServerKey, &needsPersist, logIssue, isValidKey);
+        values_.startConnectionKey = ReadKeyString(config, "startConnectionKey", values_.startConnectionKey, &needsPersist, logIssue, isValidKey);
+        values_.reinitPlayersKey = ReadKeyString(config, "reinitPlayersKey", values_.reinitPlayersKey, &needsPersist, logIssue, isValidKey);
+        values_.revivePlayerKey = ReadKeyString(config, "revivePlayerKey", values_.revivePlayerKey, &needsPersist, logIssue, isValidKey);
 
         if (persistDefaults && needsPersist) {
             PersistConfig(path);
