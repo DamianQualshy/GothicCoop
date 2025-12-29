@@ -228,7 +228,7 @@ namespace GOTHIC_ENGINE {
     }
 
     static int GetFriendDefaultInstanceId() {
-        auto instId = parser->GetIndex(FriendInstanceId);
+        auto instId = parser->GetIndex(FriendInstance);
 
         return instId;
     }

@@ -421,7 +421,7 @@ namespace GOTHIC_ENGINE {
         }
 
         // TMP: Use the logic to start/stop anim only for NB, it works by just not calling the function in g1/g2
-        if (FriendInstanceId.Compare("pc_heromul") && a && a->aniName && (a->aniName == "S_RUN" || a->aniName == "S_FISTRUN")) {
+        if (FriendInstance.Compare("pc_heromul") && a && a->aniName && (a->aniName == "S_RUN" || a->aniName == "S_FISTRUN")) {
             auto activeBefore = _this->IsAnimationActive(a->aniName);
             Ivk_zCModel_StartAni(_this, a, b);
 

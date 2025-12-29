@@ -1,9 +1,5 @@
-#include "Config.h"
-
 #include <fstream>
 #include <sstream>
-
-#include "dependencies/toml++/toml.hpp"
 
 namespace GOTHIC_ENGINE {
     void CoopLog(std::string l);
@@ -11,9 +7,11 @@ namespace GOTHIC_ENGINE {
     namespace {
         const char* kDefaultServer = "localhost";
         const int kDefaultPort = 1234;
-        const char* kDefaultFriendInstanceId = "CH";
+        const char* kDefaultFriendInstance = "CH";
         const int kDefaultPlayersDamageMultiplier = 50;
         const int kDefaultNpcsDamageMultiplier = 100;
+        const char* kDefaultBodyModel = "HUM_BODY_NAKED0";
+        const char* kDefaultHeadModel = "HUM_HEAD_PONY";
 
 #if ENGINE >= Engine_G2
         const int kDefaultBodyTex = 9;
@@ -64,6 +62,124 @@ namespace GOTHIC_ENGINE {
             description.append(key);
             return description;
         }
+
+        template <typename LogFn>
+        std::string ReadString(const toml::table& table,
+                               const char* section,
+                               const char* key,
+                               const std::string& defaultValue,
+                               bool required,
+                               bool* needsPersist,
+                               LogFn&& logIssue) {
+            const toml::node* node = FindNode(table, section, key);
+            if (!node) {
+                if (required) {
+                    logIssue("Missing required key '" + DescribeKey(section, key) + "', using default.");
+                    if (needsPersist) {
+                        *needsPersist = true;
+                    }
+                }
+                return defaultValue;
+            }
+
+            auto value = node->value<std::string>();
+            if (!value) {
+                logIssue("Invalid type for key '" + DescribeKey(section, key) + "', expected string.");
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            if (required && value->empty()) {
+                logIssue("Empty value for key '" + DescribeKey(section, key) + "', using default.");
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            return *value;
+        }
+
+        template <typename LogFn>
+        int ReadInt(const toml::table& table,
+                    const char* section,
+                    const char* key,
+                    int defaultValue,
+                    int minValue,
+                    int maxValue,
+                    bool required,
+                    bool* needsPersist,
+                    LogFn&& logIssue) {
+            const toml::node* node = FindNode(table, section, key);
+            if (!node) {
+                if (required) {
+                    logIssue("Missing required key '" + DescribeKey(section, key) + "', using default.");
+                    if (needsPersist) {
+                        *needsPersist = true;
+                    }
+                }
+                return defaultValue;
+            }
+
+            auto value = node->value<int64_t>();
+            if (!value) {
+                logIssue("Invalid type for key '" + DescribeKey(section, key) + "', expected integer.");
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            if (*value < minValue || *value > maxValue) {
+                std::ostringstream message;
+                message << "Value for key '" << DescribeKey(section, key)
+                        << "' out of range (" << minValue << "-" << maxValue << "), using default.";
+                logIssue(message.str());
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            return static_cast<int>(*value);
+        }
+
+        template <typename LogFn>
+        std::string ReadKeyString(const toml::table& table,
+                                  const char* key,
+                                  const std::string& defaultValue,
+                                  bool* needsPersist,
+                                  LogFn&& logIssue) {
+            const toml::node* node = FindNode(table, "controls", key);
+            if (!node) {
+                logIssue("Missing required key '" + DescribeKey("controls", key) + "', using default.");
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            auto value = node->value<std::string>();
+            if (!value || value->empty()) {
+                logIssue("Invalid value for key '" + DescribeKey("controls", key) + "', expected non-empty string.");
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            if (!IsValidKeyCode(*value)) {
+                logIssue("Unknown key code '" + *value + "' for key '" + DescribeKey("controls", key) + "', using default.");
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            return *value;
+        }
     }
 
     Config::Config() {
@@ -75,7 +191,7 @@ namespace GOTHIC_ENGINE {
         defaults.connectionServer = kDefaultServer;
         defaults.connectionPort = kDefaultPort;
         defaults.nickname.clear();
-        defaults.friendInstanceId = kDefaultFriendInstanceId;
+        defaults.friendInstance = kDefaultFriendInstance;
         defaults.bodyModel = kDefaultBodyModel;
         defaults.bodyTex = kDefaultBodyTex;
         defaults.headModel = kDefaultHeadModel;
@@ -122,24 +238,26 @@ namespace GOTHIC_ENGINE {
             return false;
         }
 
-        values_.connectionServer = ReadString(config, "connection", "server", values_.connectionServer, true, &needsPersist);
-        values_.connectionPort = ReadInt(config, "connection", "port", values_.connectionPort, kPortMin, kPortMax, true, &needsPersist);
-        values_.nickname = ReadString(config, "player", "nickname", values_.nickname, false, &needsPersist);
-        values_.friendInstanceId = ReadString(config, "player", "friendInstance", values_.friendInstanceId, false, &needsPersist);
-        values_.bodyModel = ReadString(config, "appearance", "bodyModel", values_.bodyModel, false, &needsPersist);
-        values_.bodyTex = ReadInt(config, "appearance", "bodyTex", values_.bodyTex, kBodyVarMin, kBodyVarMax, false, &needsPersist);
-        values_.headModel = ReadString(config, "appearance", "headModel", values_.headModel, false, &needsPersist);
-        values_.headTex = ReadInt(config, "appearance", "headTex", values_.headTex, kHeadVarMin, kHeadVarMax, false, &needsPersist);
-        values_.skinColor = ReadInt(config, "appearance", "skinColorG1", values_.skinColor, kSkinColorMin, kSkinColorMax, false, &needsPersist);
-        values_.playersDamageMultiplier = ReadInt(config, "gameplay", "playersDamageMultiplier", values_.playersDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist);
-        values_.npcsDamageMultiplier = ReadInt(config, "gameplay", "npcsDamageMultiplier", values_.npcsDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist);
+        auto logIssue = [this](const std::string& message) { LogIssue(message); };
 
-        values_.toggleGameLogKey = ReadKeyString(config, "toggleGameLogKey", values_.toggleGameLogKey, &needsPersist);
-        values_.toggleGameStatsKey = ReadKeyString(config, "toggleGameStatsKey", values_.toggleGameStatsKey, &needsPersist);
-        values_.startServerKey = ReadKeyString(config, "startServerKey", values_.startServerKey, &needsPersist);
-        values_.startConnectionKey = ReadKeyString(config, "startConnectionKey", values_.startConnectionKey, &needsPersist);
-        values_.reinitPlayersKey = ReadKeyString(config, "reinitPlayersKey", values_.reinitPlayersKey, &needsPersist);
-        values_.revivePlayerKey = ReadKeyString(config, "revivePlayerKey", values_.revivePlayerKey, &needsPersist);
+        values_.connectionServer = ReadString(config, "connection", "server", values_.connectionServer, true, &needsPersist, logIssue);
+        values_.connectionPort = ReadInt(config, "connection", "port", values_.connectionPort, kPortMin, kPortMax, true, &needsPersist, logIssue);
+        values_.nickname = ReadString(config, "player", "nickname", values_.nickname, false, &needsPersist, logIssue);
+        values_.friendInstance = ReadString(config, "player", "friendInstance", values_.friendInstance, false, &needsPersist, logIssue);
+        values_.bodyModel = ReadString(config, "appearance", "bodyModel", values_.bodyModel, false, &needsPersist, logIssue);
+        values_.bodyTex = ReadInt(config, "appearance", "bodyTex", values_.bodyTex, kBodyTexMin, kBodyTexMax, false, &needsPersist, logIssue);
+        values_.headModel = ReadString(config, "appearance", "headModel", values_.headModel, false, &needsPersist, logIssue);
+        values_.headTex = ReadInt(config, "appearance", "headTex", values_.headTex, kHeadTexMin, kHeadTexMax, false, &needsPersist, logIssue);
+        values_.skinColor = ReadInt(config, "appearance", "skinColorG1", values_.skinColor, kSkinColorMin, kSkinColorMax, false, &needsPersist, logIssue);
+        values_.playersDamageMultiplier = ReadInt(config, "gameplay", "playersDamageMultiplier", values_.playersDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
+        values_.npcsDamageMultiplier = ReadInt(config, "gameplay", "npcsDamageMultiplier", values_.npcsDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
+
+        values_.toggleGameLogKey = ReadKeyString(config, "toggleGameLogKey", values_.toggleGameLogKey, &needsPersist, logIssue);
+        values_.toggleGameStatsKey = ReadKeyString(config, "toggleGameStatsKey", values_.toggleGameStatsKey, &needsPersist, logIssue);
+        values_.startServerKey = ReadKeyString(config, "startServerKey", values_.startServerKey, &needsPersist, logIssue);
+        values_.startConnectionKey = ReadKeyString(config, "startConnectionKey", values_.startConnectionKey, &needsPersist, logIssue);
+        values_.reinitPlayersKey = ReadKeyString(config, "reinitPlayersKey", values_.reinitPlayersKey, &needsPersist, logIssue);
+        values_.revivePlayerKey = ReadKeyString(config, "revivePlayerKey", values_.revivePlayerKey, &needsPersist, logIssue);
 
         if (persistDefaults && needsPersist) {
             PersistConfig(path);
@@ -160,20 +278,28 @@ namespace GOTHIC_ENGINE {
         return values_.nickname;
     }
 
-    const std::string& Config::FriendInstanceId() const {
-        return values_.friendInstanceId;
+    const std::string& Config::FriendInstance() const {
+        return values_.friendInstance;
+    }
+
+    const std::string& Config::BodyModel() const {
+        return values_.bodyModel;
     }
 
     int Config::BodyTex() const {
-        return values_.BodyTex;
+        return values_.bodyTex;
+    }
+
+    const std::string& Config::HeadModel() const {
+        return values_.headModel;
     }
 
     int Config::HeadTex() const {
-        return values_.HeadTex;
+        return values_.headTex;
     }
 
     int Config::BodyColor() const {
-        return values_.BodyColor;
+        return values_.skinColor;
     }
 
     int Config::PlayersDamageMultiplier() const {
@@ -216,7 +342,7 @@ namespace GOTHIC_ENGINE {
         });
         config.insert("player", toml::table{
             {"nickname", values_.nickname},
-            {"friendInstanceId", values_.friendInstanceId}
+            {"friendInstance", values_.friendInstance}
         });
         config.insert("appearance", toml::table{
             {"bodyModel", values_.bodyModel},
@@ -250,118 +376,6 @@ namespace GOTHIC_ENGINE {
 
     void Config::LogIssue(const std::string& message) const {
         CoopLog("[Config] " + message + "\r\n");
-    }
-
-    std::string Config::ReadString(const toml::table& table,
-                                   const char* section,
-                                   const char* key,
-                                   const std::string& defaultValue,
-                                   bool required,
-                                   bool* needsPersist) const {
-        const toml::node* node = FindNode(table, section, key);
-        if (!node) {
-            if (required) {
-                LogIssue("Missing required key '" + DescribeKey(section, key) + "', using default.");
-                if (needsPersist) {
-                    *needsPersist = true;
-                }
-            }
-            return defaultValue;
-        }
-
-        auto value = node->value<std::string>();
-        if (!value) {
-            LogIssue("Invalid type for key '" + DescribeKey(section, key) + "', expected string.");
-            if (needsPersist) {
-                *needsPersist = true;
-            }
-            return defaultValue;
-        }
-
-        if (required && value->empty()) {
-            LogIssue("Empty value for key '" + DescribeKey(section, key) + "', using default.");
-            if (needsPersist) {
-                *needsPersist = true;
-            }
-            return defaultValue;
-        }
-
-        return *value;
-    }
-
-    int Config::ReadInt(const toml::table& table,
-                        const char* section,
-                        const char* key,
-                        int defaultValue,
-                        int minValue,
-                        int maxValue,
-                        bool required,
-                        bool* needsPersist) const {
-        const toml::node* node = FindNode(table, section, key);
-        if (!node) {
-            if (required) {
-                LogIssue("Missing required key '" + DescribeKey(section, key) + "', using default.");
-                if (needsPersist) {
-                    *needsPersist = true;
-                }
-            }
-            return defaultValue;
-        }
-
-        auto value = node->value<int64_t>();
-        if (!value) {
-            LogIssue("Invalid type for key '" + DescribeKey(section, key) + "', expected integer.");
-            if (needsPersist) {
-                *needsPersist = true;
-            }
-            return defaultValue;
-        }
-
-        if (*value < minValue || *value > maxValue) {
-            std::ostringstream message;
-            message << "Value for key '" << DescribeKey(section, key)
-                    << "' out of range (" << minValue << "-" << maxValue << "), using default.";
-            LogIssue(message.str());
-            if (needsPersist) {
-                *needsPersist = true;
-            }
-            return defaultValue;
-        }
-
-        return static_cast<int>(*value);
-    }
-
-    std::string Config::ReadKeyString(const toml::table& table,
-                                      const char* key,
-                                      const std::string& defaultValue,
-                                      bool* needsPersist) const {
-        const toml::node* node = FindNode(table, "controls", key);
-        if (!node) {
-            LogIssue("Missing required key '" + DescribeKey("controls", key) + "', using default.");
-            if (needsPersist) {
-                *needsPersist = true;
-            }
-            return defaultValue;
-        }
-
-        auto value = node->value<std::string>();
-        if (!value || value->empty()) {
-            LogIssue("Invalid value for key '" + DescribeKey("controls", key) + "', expected non-empty string.");
-            if (needsPersist) {
-                *needsPersist = true;
-            }
-            return defaultValue;
-        }
-
-        if (!IsValidKeyCode(*value)) {
-            LogIssue("Unknown key code '" + *value + "' for key '" + DescribeKey("controls", key) + "', using default.");
-            if (needsPersist) {
-                *needsPersist = true;
-            }
-            return defaultValue;
-        }
-
-        return *value;
     }
 
     int Config::ToKeyCode(const std::string& keyValue, const std::string& fallbackKey) const {

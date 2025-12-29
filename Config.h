@@ -1,8 +1,6 @@
-#include <string>
+#include "dependencies/toml++/toml.hpp"
 
-namespace toml {
-    class table;
-}
+#include <string>
 
 namespace GOTHIC_ENGINE {
     class Config {
@@ -11,12 +9,12 @@ namespace GOTHIC_ENGINE {
             std::string connectionServer;
             int connectionPort = 0;
             std::string nickname;
-            std::string friendInstanceId;
-            std::string BodyModel = "";
-            int BodyTex = 0;
-            std::string HeadModel = "";
-            int HeadTex = 0;
-            int BodyColor = 0;
+            std::string friendInstance;
+            std::string bodyModel = "";
+            int bodyTex = 0;
+            std::string headModel = "";
+            int headTex = 0;
+            int skinColor = 0;
             int playersDamageMultiplier = 0;
             int npcsDamageMultiplier = 0;
             std::string toggleGameLogKey;
@@ -34,12 +32,12 @@ namespace GOTHIC_ENGINE {
         const std::string& ConnectionServer() const;
         int ConnectionPort() const;
         const std::string& Nickname() const;
-        const std::string& FriendInstanceId() const;
+        const std::string& FriendInstance() const;
         const std::string& BodyModel() const;
         int BodyTex() const;
         const std::string& HeadModel() const;
         int HeadTex() const;
-        int SkinColor() const;
+        int BodyColor() const;
         int PlayersDamageMultiplier() const;
         int NpcsDamageMultiplier() const;
 
@@ -58,24 +56,6 @@ namespace GOTHIC_ENGINE {
 
         void LogIssue(const std::string& message) const;
 
-        std::string ReadString(const toml::table& table,
-                               const char* section,
-                               const char* key,
-                               const std::string& defaultValue,
-                               bool required,
-                               bool* needsPersist) const;
-        int ReadInt(const toml::table& table,
-                    const char* section,
-                    const char* key,
-                    int defaultValue,
-                    int minValue,
-                    int maxValue,
-                    bool required,
-                    bool* needsPersist) const;
-        std::string ReadKeyString(const toml::table& table,
-                                  const char* key,
-                                  const std::string& defaultValue,
-                                  bool* needsPersist) const;
         int ToKeyCode(const std::string& keyValue, const std::string& fallbackKey) const;
         bool IsValidKeyCode(const std::string& keyValue) const;
     };

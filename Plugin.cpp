@@ -39,11 +39,11 @@ namespace GOTHIC_ENGINE {
         PlayersDamageMultipler = CoopConfig.PlayersDamageMultiplier();
         NpcsDamageMultipler = CoopConfig.NpcsDamageMultiplier();
 
-        auto friendInstanceId = CoopConfig.FriendInstanceId();
-        if (!friendInstanceId.empty()) {
-            auto stdStringFriendInstanceId = friendInstanceId;
-            std::transform(stdStringFriendInstanceId.begin(), stdStringFriendInstanceId.end(), stdStringFriendInstanceId.begin(), ::tolower);
-            FriendInstanceId = string(stdStringFriendInstanceId.c_str()).ToChar();
+        auto friendInstance = CoopConfig.FriendInstance();
+        if (!friendInstance.empty()) {
+            auto stdStringFriendInstance = friendInstance;
+            std::transform(stdStringFriendInstance.begin(), stdStringFriendInstance.end(), stdStringFriendInstance.begin(), ::tolower);
+            FriendInstance = string(stdStringFriendInstance.c_str()).ToChar();
         }
         auto nickname = CoopConfig.Nickname();
         if (!nickname.empty()) {
@@ -245,12 +245,12 @@ namespace GOTHIC_ENGINE {
     void Game_LoadEnd_SaveGame() {
         LoadEnd();
 
-        auto coopFriendInstanceId = GetFriendDefaultInstanceId();
+        auto coopFriendInstance = GetFriendDefaultInstanceId();
         auto* list = ogame->GetGameWorld()->voblist_npcs->next;
 
         while (list) {
             auto npc = list->data;
-            if (npc->GetInstance() == coopFriendInstanceId && npc->GetAttribute(NPC_ATR_STRENGTH) == COOP_MAGIC_NUMBER) {
+            if (npc->GetInstance() == coopFriendInstance && npc->GetAttribute(NPC_ATR_STRENGTH) == COOP_MAGIC_NUMBER) {
                 ogame->spawnman->DeleteNpc(npc);
             }
             list = list->next;
