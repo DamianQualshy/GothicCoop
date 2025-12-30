@@ -1,3 +1,5 @@
+#include <cctype>
+
 namespace GOTHIC_ENGINE {
     float GetVec3LengthApprox(const zVEC3& vec) {
     #ifdef __G1A
@@ -247,6 +249,7 @@ namespace GOTHIC_ENGINE {
             if (hasModel) {
                 auto a = update.animation.animationId;
                 npc->GetModel()->StartAni(a, COOP_MAGIC_NUMBER);
+                TrySyncMobInteraction(update.animation.animationName);
             }
         }
 
@@ -726,10 +729,9 @@ namespace GOTHIC_ENGINE {
         }
 
         void UpdateTime(const PlayerStateUpdatePacket& update) {
-            if (!IsPlayerTalkingWithAnybody()) {
-                auto h = update.time.hour;
-                auto m = update.time.minute;
-                ogame->GetWorldTimer()->SetTime(h, m);
+            auto worldTimer = ogame ? ogame->GetWorldTimer() : nullptr;
+            if (worldTimer) {
+                worldTimer->SetFullTime(update.time.rawTime);
             }
         }
 
@@ -1039,6 +1041,61 @@ namespace GOTHIC_ENGINE {
             }
 
             return false;
+        }
+
+    private:
+        static std::string ToUpper(std::string value) {
+            for (char& c : value) {
+                c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            }
+            return value;
+        }
+
+        static bool IsInteractionAnimationName(const std::string& animationName) {
+            if (animationName.empty()) {
+                return false;
+            }
+            const std::string upperName = ToUpper(animationName);
+            return upperName.find("DOOR") != std::string::npos
+                || upperName.find("LEVER") != std::string::npos
+                || upperName.find("TOUCHPLATE") != std::string::npos
+                || upperName.find("VWHEEL") != std::string::npos;
+        }
+
+        static int ExtractMobStateFromAnimationName(const std::string& animationName, int fallbackState) {
+            const std::string upperName = ToUpper(animationName);
+            std::size_t pos = upperName.rfind("_S");
+            if (pos == std::string::npos || pos + 2 >= upperName.size()) {
+                return fallbackState;
+            }
+            pos += 2;
+            int state = 0;
+            bool foundDigit = false;
+            while (pos < upperName.size()) {
+                char c = upperName[pos];
+                if (c < '0' || c > '9') {
+                    break;
+                }
+                foundDigit = true;
+                state = (state * 10) + (c - '0');
+                ++pos;
+            }
+            return foundDigit ? state : fallbackState;
+        }
+
+        void TrySyncMobInteraction(const std::string& animationName) {
+            if (!npc || !IsInteractionAnimationName(animationName)) {
+                return;
+            }
+            auto mob = npc->GetInteractMob();
+            if (!mob) {
+                mob = zDYNAMIC_CAST<oCMobInter>(npc->GetFocusVob());
+            }
+            if (!mob) {
+                return;
+            }
+            const int targetState = ExtractMobStateFromAnimationName(animationName, 1);
+            mob->AI_UseMobToState(npc, targetState);
         }
     };
 }

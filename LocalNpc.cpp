@@ -10,7 +10,11 @@ namespace GOTHIC_ENGINE {
         std::list<int> pendingUpdates;
         std::list<PlayerHit> hitsToSync;
         std::list<SpellCast> spellCastsToSync;
-        std::vector<int> newAnimIds;
+        struct PendingAnimationSync {
+            int animationId = 0;
+            zSTRING animationName;
+        };
+        std::vector<PendingAnimationSync> newAnimations;
         zCModelAni* lastAnimation;
         zCArray<int> pArrOverlays;
         zVEC3 lastPosition;
@@ -70,7 +74,7 @@ namespace GOTHIC_ENGINE {
                 this->SyncHand();
 
                 if (ServerThread) {
-                    if (CurrentMs > lastTimeSyncTime + 60000) {
+                    if (CurrentMs > lastTimeSyncTime + 5000) {
                         this->SyncTime();
                         lastTimeSyncTime = CurrentMs;
                     }
@@ -115,7 +119,10 @@ namespace GOTHIC_ENGINE {
             pArrOverlays.DeleteList();
             
             if (lastAnimation) {
-                newAnimIds.push_back(lastAnimation->aniID);
+                PendingAnimationSync pending;
+                pending.animationId = lastAnimation->aniID;
+                pending.animationName = lastAnimation->aniName;
+                newAnimations.push_back(pending);
             }
         }
 
@@ -162,11 +169,14 @@ namespace GOTHIC_ENGINE {
             }
 
             if (currentLastAnim != lastAnimation) {
-                newAnimIds.push_back(currentLastAnim->aniID);
+                PendingAnimationSync pending;
+                pending.animationId = currentLastAnim->aniID;
+                pending.animationName = currentLastAnim->aniName;
+                newAnimations.push_back(pending);
                 lastAnimation = currentLastAnim;
             }
 
-            if (newAnimIds.size() > 0)
+            if (!newAnimations.empty())
             {
                 addUpdate(SYNC_ANIMATION);
             }
@@ -368,7 +378,9 @@ namespace GOTHIC_ENGINE {
         }
 
         void SyncTime() {
-            addUpdate(SYNC_TIME);
+            if (ogame && ogame->GetWorldTimer()) {
+                addUpdate(SYNC_TIME);
+            }
         }
 
         void SyncRevived(zSTRING friendName) {
@@ -428,8 +440,12 @@ namespace GOTHIC_ENGINE {
                 }
                 case SYNC_ANIMATION:
                 {
-                    packet.animation.animationId = newAnimIds.back();
-                    newAnimIds.pop_back();
+                    if (!newAnimations.empty()) {
+                        auto pending = newAnimations.back();
+                        newAnimations.pop_back();
+                        packet.animation.animationId = pending.animationId;
+                        packet.animation.animationName = pending.animationName.ToChar();
+                    }
                     break;
                 }
                 case SYNC_WEAPON_MODE:
@@ -510,11 +526,10 @@ namespace GOTHIC_ENGINE {
                 }
                 case SYNC_TIME:
                 {
-                    int _a, h, m;
-                    ogame->GetTime(_a, h, m);
-
-                    packet.time.hour = h;
-                    packet.time.minute = m;
+                    auto worldTimer = ogame ? ogame->GetWorldTimer() : nullptr;
+                    if (worldTimer) {
+                        packet.time.rawTime = worldTimer->GetFullTime();
+                    }
                     break;
                 }
                 case SYNC_REVIVED:

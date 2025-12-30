@@ -48,6 +48,7 @@ namespace GOTHIC_ENGINE {
 
     struct SyncAnimationPayload {
         int animationId = 0;
+        std::string animationName;
     };
 
     struct SyncWeaponModePayload {
@@ -105,8 +106,7 @@ namespace GOTHIC_ENGINE {
     };
 
     struct SyncTimePayload {
-        int hour = 0;
-        int minute = 0;
+        float rawTime = 0.0f;
     };
 
     struct SyncRevivedPayload {
@@ -180,7 +180,7 @@ namespace GOTHIC_ENGINE {
         Server,
     };
 
-    constexpr std::uint8_t kNetworkPacketVersion = 2;
+    constexpr std::uint8_t kNetworkPacketVersion = 3;
     constexpr std::size_t kMaxPacketBytes = 16384;
     constexpr std::size_t kMaxNameLength = 64;
     constexpr std::size_t kMaxNicknameLength = 32;
@@ -189,6 +189,7 @@ namespace GOTHIC_ENGINE {
     constexpr std::size_t kMaxOverlayCount = 96;
     constexpr std::size_t kMaxSpellCastCount = 32;
     constexpr std::size_t kMaxAttackCount = 32;
+    constexpr std::size_t kMaxAnimationNameLength = 64;
     constexpr int kMinSkinColor = 0;
     constexpr int kMaxSkinColor = 3;
 
@@ -444,6 +445,10 @@ namespace GOTHIC_ENGINE {
                 break;
             case SYNC_ANIMATION:
                 writer.writeI32(packet.stateUpdate.animation.animationId);
+                if (!writer.writeString(packet.stateUpdate.animation.animationName, kMaxAnimationNameLength)) {
+                    error = "Animation name too long.";
+                    return false;
+                }
                 break;
             case SYNC_WEAPON_MODE:
                 writer.writeI32(packet.stateUpdate.weaponMode.weaponMode);
@@ -518,8 +523,7 @@ namespace GOTHIC_ENGINE {
                 }
                 break;
             case SYNC_TIME:
-                writer.writeI32(packet.stateUpdate.time.hour);
-                writer.writeI32(packet.stateUpdate.time.minute);
+                writer.writeFloat(packet.stateUpdate.time.rawTime);
                 break;
             case SYNC_REVIVED:
                 if (!writer.writeString(packet.stateUpdate.revived.name, kMaxNameLength)) {
@@ -743,6 +747,10 @@ namespace GOTHIC_ENGINE {
                     error = "Invalid animation packet.";
                     return false;
                 }
+                if (!ReadSanitizedText(reader, out.stateUpdate.animation.animationName, kMaxAnimationNameLength, mode == PacketDecodeMode::Server)) {
+                    error = "Invalid animation name.";
+                    return false;
+                }
                 if (!ValidateRange(out.stateUpdate.animation.animationId, 0, 100000)) {
                     error = "Animation id out of range.";
                     return false;
@@ -893,13 +901,11 @@ namespace GOTHIC_ENGINE {
                 }
                 break;
             case SYNC_TIME:
-                if (!reader.readI32(out.stateUpdate.time.hour)
-                    || !reader.readI32(out.stateUpdate.time.minute)) {
+                if (!reader.readFloat(out.stateUpdate.time.rawTime)) {
                     error = "Invalid time packet.";
                     return false;
                 }
-                if (!ValidateRange(out.stateUpdate.time.hour, 0, 23)
-                    || !ValidateRange(out.stateUpdate.time.minute, 0, 59)) {
+                if (!ValidateRangeFloat(out.stateUpdate.time.rawTime, 0.0f, 1000000000.0f)) {
                     error = "Time out of range.";
                     return false;
                 }
