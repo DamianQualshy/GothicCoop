@@ -908,7 +908,17 @@ namespace GOTHIC_ENGINE {
                 return;
             }
             if (!npc) {
-                npc = dynamic_cast<oCNpc*>(ogame->GetGameWorld()->CreateVob(zTVobType::zVOB_TYPE_NSC, instanceId));
+                zCVob* createdVob = ogame->GetGameWorld()->CreateVob(zTVobType::zVOB_TYPE_NSC, instanceId);
+                if (createdVob && zCObject::CheckInheritance(oCNpc::classDef, createdVob->_GetClassDef())) {
+                    npc = static_cast<oCNpc*>(createdVob);
+                } else {
+                    npc = NULL;
+                }
+            }
+
+            if (!npc) {
+                ChatLog("Failed to create coop friend NPC (CreateVob did not return oCNpc).");
+                return;
             }
 
             ogame->spawnman->InsertNpc(npc, *lastPositionFromServer);
