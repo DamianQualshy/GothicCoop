@@ -50,6 +50,9 @@ namespace GOTHIC_ENGINE {
             int skinColor = 0;
             int playersDamageMultiplier = 0;
             int npcsDamageMultiplier = 0;
+            std::string logLevel;
+            std::string logFilePath;
+            bool logToConsole = false;
             std::string toggleGameLogKey;
             std::string toggleGameStatsKey;
             std::string startServerKey;
@@ -73,6 +76,9 @@ namespace GOTHIC_ENGINE {
         int BodyColor() const;
         int PlayersDamageMultiplier() const;
         int NpcsDamageMultiplier() const;
+        const std::string& LogLevel() const;
+        const std::string& LogFilePath() const;
+        bool LogToConsole() const;
 
         int ToggleGameLogKeyCode() const;
         int ToggleGameStatsKeyCode() const;
@@ -91,5 +97,6 @@ namespace GOTHIC_ENGINE {
 
         int ToKeyCode(const std::string& keyValue, const std::string& fallbackKey) const;
         bool IsValidKeyCode(const std::string& keyValue) const;
+        bool IsValidLogLevel(const std::string& level) const;
     };
 }

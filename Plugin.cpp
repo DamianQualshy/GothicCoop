@@ -1,6 +1,36 @@
-﻿#include "resource.h"
+﻿#include <cctype>
+
+#include "resource.h"
 
 namespace GOTHIC_ENGINE {
+    namespace {
+        bool IsAbsolutePath(const std::string& path) {
+            if (path.empty()) {
+                return false;
+            }
+            if (path.size() >= 2 && std::isalpha(static_cast<unsigned char>(path[0])) && path[1] == ':') {
+                return true;
+            }
+            if (path.size() >= 2 && path[0] == '\\' && path[1] == '\\') {
+                return true;
+            }
+            return path[0] == '\\' || path[0] == '/';
+        }
+
+        std::string ResolveLogPath(const std::string& configuredPath) {
+            if (configuredPath.empty()) {
+                return GothicCoopLogPath;
+            }
+            if (IsAbsolutePath(configuredPath)) {
+                return configuredPath;
+            }
+            std::string resolved = GothicExeFolderPath;
+            resolved.append("\\");
+            resolved.append(configuredPath);
+            return resolved;
+        }
+    }
+
     void Game_Entry() {
         GetCurrentDirectory(MAX_PATH, GothicExeFolderPath);
 
@@ -10,6 +40,7 @@ namespace GOTHIC_ENGINE {
         std::string logFilePath = GothicExeFolderPath;
         logFilePath.append("\\GothicCoopLog.log");
         GothicCoopLogPath = logFilePath;
+        InitializeLogging(GothicCoopLogPath, "info", false);
 
         std::string configFilePath = GothicExeFolderPath;
         configFilePath.append("\\GothicCoopConfig.toml");
@@ -17,6 +48,9 @@ namespace GOTHIC_ENGINE {
         if (!loadedConfig) {
             Message::Error("(Gothic Coop) Config file missing or invalid. Defaults will be used.");
         }
+
+        GothicCoopLogPath = ResolveLogPath(CoopConfig.LogFilePath());
+        InitializeLogging(GothicCoopLogPath, CoopConfig.LogLevel(), CoopConfig.LogToConsole());
     }
 
     void Game_Init() {

@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <sstream>
 
@@ -12,6 +14,9 @@ namespace GOTHIC_ENGINE {
         const int kDefaultNpcsDamageMultiplier = 100;
         const char* kDefaultBodyModel = "HUM_BODY_NAKED0";
         const char* kDefaultHeadModel = "HUM_HEAD_PONY";
+        const char* kDefaultLogLevel = "info";
+        const char* kDefaultLogFilePath = "GothicCoopLog.log";
+        const bool kDefaultLogToConsole = false;
 
 #if ENGINE >= Engine_G2
         const int kDefaultBodyTex = 9;
@@ -181,6 +186,37 @@ namespace GOTHIC_ENGINE {
 
             return *value;
         }
+
+        template <typename LogFn>
+        bool ReadBool(const toml::table& table,
+                      const char* section,
+                      const char* key,
+                      bool defaultValue,
+                      bool* needsPersist,
+                      LogFn&& logIssue) {
+            const toml::node* node = FindNode(table, section, key);
+            if (!node) {
+                return defaultValue;
+            }
+
+            auto value = node->value<bool>();
+            if (!value) {
+                logIssue("Invalid type for key '" + DescribeKey(section, key) + "', expected boolean.");
+                if (needsPersist) {
+                    *needsPersist = true;
+                }
+                return defaultValue;
+            }
+
+            return *value;
+        }
+
+        std::string ToLower(std::string value) {
+            std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+                return static_cast<char>(std::tolower(ch));
+            });
+            return value;
+        }
     }
 
     Config::Config() {
@@ -200,6 +236,9 @@ namespace GOTHIC_ENGINE {
         defaults.skinColor = kDefaultBodyColor;
         defaults.playersDamageMultiplier = kDefaultPlayersDamageMultiplier;
         defaults.npcsDamageMultiplier = kDefaultNpcsDamageMultiplier;
+        defaults.logLevel = kDefaultLogLevel;
+        defaults.logFilePath = kDefaultLogFilePath;
+        defaults.logToConsole = kDefaultLogToConsole;
         defaults.toggleGameLogKey = kDefaultToggleGameLogKey;
         defaults.toggleGameStatsKey = kDefaultToggleGameStatsKey;
         defaults.startServerKey = kDefaultStartServerKey;
@@ -252,6 +291,22 @@ namespace GOTHIC_ENGINE {
         values_.skinColor = ReadInt(config, "appearance", "skinColorG1", values_.skinColor, kSkinColorMin, kSkinColorMax, false, &needsPersist, logIssue);
         values_.playersDamageMultiplier = ReadInt(config, "gameplay", "playersDamageMultiplier", values_.playersDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
         values_.npcsDamageMultiplier = ReadInt(config, "gameplay", "npcsDamageMultiplier", values_.npcsDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
+
+        values_.logLevel = ReadString(config, "logging", "level", values_.logLevel, false, &needsPersist, logIssue);
+        values_.logFilePath = ReadString(config, "logging", "filePath", values_.logFilePath, false, &needsPersist, logIssue);
+        values_.logToConsole = ReadBool(config, "logging", "console", values_.logToConsole, &needsPersist, logIssue);
+
+        if (!IsValidLogLevel(values_.logLevel)) {
+            logIssue("Invalid log level '" + values_.logLevel + "', using default.");
+            values_.logLevel = kDefaultLogLevel;
+            needsPersist = true;
+        }
+
+        if (values_.logFilePath.empty()) {
+            logIssue("Log file path is empty, using default.");
+            values_.logFilePath = kDefaultLogFilePath;
+            needsPersist = true;
+        }
 
         auto isValidKey = [this](const std::string& keyValue) { return IsValidKeyCode(keyValue); };
 
@@ -313,6 +368,18 @@ namespace GOTHIC_ENGINE {
         return values_.npcsDamageMultiplier;
     }
 
+    const std::string& Config::LogLevel() const {
+        return values_.logLevel;
+    }
+
+    const std::string& Config::LogFilePath() const {
+        return values_.logFilePath;
+    }
+
+    bool Config::LogToConsole() const {
+        return values_.logToConsole;
+    }
+
     int Config::ToggleGameLogKeyCode() const {
         return ToKeyCode(values_.toggleGameLogKey, kDefaultToggleGameLogKey);
     }
@@ -358,6 +425,11 @@ namespace GOTHIC_ENGINE {
             {"playersDamageMultiplier", values_.playersDamageMultiplier},
             {"npcsDamageMultiplier", values_.npcsDamageMultiplier}
         });
+        config.insert("logging", toml::table{
+            {"level", values_.logLevel},
+            {"filePath", values_.logFilePath},
+            {"console", values_.logToConsole}
+        });
         config.insert("controls", toml::table{
             {"toggleGameLogKey", values_.toggleGameLogKey},
             {"toggleGameStatsKey", values_.toggleGameStatsKey},
@@ -392,5 +464,17 @@ namespace GOTHIC_ENGINE {
 
     bool Config::IsValidKeyCode(const std::string& keyValue) const {
         return GetEmulationKeyCode(string(keyValue.c_str())) != 0;
+    }
+
+    bool Config::IsValidLogLevel(const std::string& level) const {
+        const auto normalized = ToLower(level);
+        return normalized == "trace"
+            || normalized == "debug"
+            || normalized == "info"
+            || normalized == "warn"
+            || normalized == "warning"
+            || normalized == "error"
+            || normalized == "critical"
+            || normalized == "off";
     }
 }

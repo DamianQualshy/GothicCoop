@@ -11,19 +11,19 @@ namespace GOTHIC_ENGINE {
             string name = packetData.disconnect.name.c_str();
             string nickname = packetData.disconnect.hasNickname ? packetData.disconnect.nickname.c_str() : "";
             auto displayName = nickname.IsEmpty() ? name : nickname;
-            ChatLog(string::Combine("%s disconnected.", displayName));
+            LogMessage(spdlog::level::info, string::Combine("%s disconnected.", displayName));
 
             removeSyncedNpc(name);
             return;
         }
 
         if (packetData.type != PacketType::PlayerStateUpdate) {
-            ChatLog("Invalid packet received (unknown type).");
+            LogRateLimited(spdlog::level::warn, "packet.invalid.type", "Invalid packet received (unknown type).", 5000);
             return;
         }
 
         if (packetData.senderId.empty()) {
-            ChatLog("Invalid packet received (missing sender id).");
+            LogRateLimited(spdlog::level::warn, "packet.invalid.sender", "Invalid packet received (missing sender id).", 5000);
             return;
         }
 
@@ -43,7 +43,7 @@ namespace GOTHIC_ENGINE {
                     peerData->nickname = nickname.c_str();
                 }
                 if (!peerData->announced && !peerData->nickname.IsEmpty()) {
-                    ChatLog(string::Combine("(Server) Player %s connected.", string(peerData->nickname)));
+                    LogMessage(spdlog::level::info, string::Combine("(Server) Player %s connected.", string(peerData->nickname)));
                     peerData->announced = true;
                 }
             }
@@ -108,7 +108,7 @@ namespace GOTHIC_ENGINE {
         {
             auto player = (PeerData*)packet.peer->data;
             if (!player) {
-                ChatLog("Received packet from peer without data; ignoring.");
+                LogRateLimited(spdlog::level::warn, "packet.peer.missing_data", "Received packet from peer without data; ignoring.", 5000);
                 enet_packet_destroy(packet.packet);
                 break;
             }
@@ -117,12 +117,15 @@ namespace GOTHIC_ENGINE {
             NetworkPacket incoming;
             std::string error;
             if (!DeserializeNetworkPacket(reinterpret_cast<const std::uint8_t*>(data), dataLenght, incoming, error, PacketDecodeMode::Server)) {
-                ChatLog(string::Combine("Invalid packet received: %s", string(error.c_str())));
+                LogRateLimited(spdlog::level::warn,
+                               "packet.server.decode_failed",
+                               string::Combine("Invalid packet received: %s", string(error.c_str())),
+                               5000);
                 enet_packet_destroy(packet.packet);
                 break;
             }
             if (incoming.type != PacketType::PlayerStateUpdate) {
-                ChatLog("Invalid packet received (unexpected type).");
+                LogRateLimited(spdlog::level::warn, "packet.server.unexpected", "Invalid packet received (unexpected type).", 5000);
                 enet_packet_destroy(packet.packet);
                 break;
             }
@@ -140,7 +143,7 @@ namespace GOTHIC_ENGINE {
         {
             auto remoteNpc = (PeerData*)(packet.peer->data);
             auto displayName = remoteNpc ? (remoteNpc->nickname.IsEmpty() ? string("Player") : remoteNpc->nickname) : string("Player");
-            ChatLog(string::Combine("%s disconnected.", displayName));
+            LogMessage(spdlog::level::info, string::Combine("%s disconnected.", displayName));
 
             NetworkPacket disconnectPacket;
             disconnectPacket.type = PacketType::PlayerDisconnect;
@@ -172,7 +175,10 @@ namespace GOTHIC_ENGINE {
             NetworkPacket incoming;
             std::string error;
             if (!DeserializeNetworkPacket(reinterpret_cast<const std::uint8_t*>(data), dataLenght, incoming, error, PacketDecodeMode::Client)) {
-                ChatLog(string::Combine("Invalid packet received: %s", string(error.c_str())));
+                LogRateLimited(spdlog::level::warn,
+                               "packet.client.decode_failed",
+                               string::Combine("Invalid packet received: %s", string(error.c_str())),
+                               5000);
                 enet_packet_destroy(packet.packet);
                 break;
             }
@@ -187,7 +193,7 @@ namespace GOTHIC_ENGINE {
         }
         case ENET_EVENT_TYPE_DISCONNECT:
         {
-            ChatLog("Connection to the server lost.");
+            LogMessage(spdlog::level::warn, "Connection to the server lost.");
             break;
         }
         }

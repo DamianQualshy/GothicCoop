@@ -1,10 +1,7 @@
-#include <fstream>
-
 namespace GOTHIC_ENGINE {
     void CoopLog(std::string l)
     {
-        std::ofstream CoopLog(GothicCoopLogPath, std::ios_base::app | std::ios_base::out);
-        CoopLog << l;
+        LogMessage(spdlog::level::info, l);
     }
 
     void ChatLog(string text, zCOLOR color = zCOLOR(255, 255, 255, 255)) {

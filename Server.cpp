@@ -3,7 +3,7 @@ namespace GOTHIC_ENGINE {
     {
         if (enet_initialize() != 0)
         {
-            ChatLog("An error occurred while initializing ENet.");
+            LogMessage(spdlog::level::err, "An error occurred while initializing ENet.");
             return EXIT_FAILURE;
         }
         atexit(enet_deinitialize);
@@ -15,11 +15,11 @@ namespace GOTHIC_ENGINE {
         server = enet_host_create(&address, 32, 2, 0, 0);
         if (server == NULL)
         {
-            ChatLog("An error occurred while trying to create an ENet server host.");
+            LogMessage(spdlog::level::err, "An error occurred while trying to create an ENet server host.");
             return EXIT_FAILURE;
         }
 
-        ChatLog(string::Combine("(Server) Ready (v. %i, port %i).", COOP_VERSION, address.port));
+        LogMessage(spdlog::level::info, string::Combine("(Server) Ready (v. %i, port %i).", COOP_VERSION, address.port));
         while (true) {
             try {
                 ENetEvent event;
@@ -44,7 +44,10 @@ namespace GOTHIC_ENGINE {
                             std::vector<std::uint8_t> payload;
                             std::string error;
                             if (!SerializeNetworkPacket(networkPacket, payload, error)) {
-                                ChatLog(string::Combine("Failed to serialize packet: %s", string(error.c_str())));
+                                LogRateLimited(spdlog::level::warn,
+                                               "server.serialize.failed",
+                                               string::Combine("Failed to serialize packet: %s", string(error.c_str())),
+                                               5000);
                                 continue;
                             }
 
@@ -59,7 +62,10 @@ namespace GOTHIC_ENGINE {
                     std::vector<std::uint8_t> payload;
                     std::string error;
                     if (!SerializeNetworkPacket(outboundPacket, payload, error)) {
-                        ChatLog(string::Combine("Failed to serialize packet: %s", string(error.c_str())));
+                        LogRateLimited(spdlog::level::warn,
+                                       "server.broadcast.serialize.failed",
+                                       string::Combine("Failed to serialize packet: %s", string(error.c_str())),
+                                       5000);
                         continue;
                     }
 

@@ -3,7 +3,7 @@ namespace GOTHIC_ENGINE {
     {
         if (enet_initialize() != 0)
         {
-            ChatLog("An error occurred while initializing ENet.");
+            LogMessage(spdlog::level::err, "An error occurred while initializing ENet.");
             return EXIT_FAILURE;
         }
         atexit(enet_deinitialize);
@@ -12,7 +12,7 @@ namespace GOTHIC_ENGINE {
         client = enet_host_create(NULL, 1, 2, 0, 0);
         if (client == NULL)
         {
-            ChatLog("An error occurred while trying to create an ENet client host.");
+            LogMessage(spdlog::level::err, "An error occurred while trying to create an ENet client host.");
             return EXIT_FAILURE;
         }
 
@@ -25,7 +25,7 @@ namespace GOTHIC_ENGINE {
         peer = enet_host_connect(client, &address, 2, 0);
         if (peer == NULL)
         {
-            ChatLog("No available peers for initiating an ENet connection.");
+            LogMessage(spdlog::level::warn, "No available peers for initiating an ENet connection.");
             return EXIT_FAILURE;
         }
 
@@ -33,12 +33,12 @@ namespace GOTHIC_ENGINE {
             enet_host_service(client, &event, 5000) > 0
             && event.type == ENET_EVENT_TYPE_CONNECT)
         {
-            ChatLog(string::Combine("Connection to the server %s succeeded (v. %i, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
+            LogMessage(spdlog::level::info, string::Combine("Connection to the server %s succeeded (v. %i, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
         }
         else
         {
             enet_peer_reset(peer);
-            ChatLog(string::Combine("Connection to the server %s failed (v. %i, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
+            LogMessage(spdlog::level::warn, string::Combine("Connection to the server %s failed (v. %i, port %i).", string(serverIp.c_str()), COOP_VERSION, address.port));
         }
 
         while (true) {
@@ -55,7 +55,10 @@ namespace GOTHIC_ENGINE {
                     std::vector<std::uint8_t> payload;
                     std::string error;
                     if (!SerializeNetworkPacket(outboundPacket, payload, error)) {
-                        ChatLog(string::Combine("Failed to serialize packet: %s", string(error.c_str())));
+                        LogRateLimited(spdlog::level::warn,
+                                       "client.serialize.failed",
+                                       string::Combine("Failed to serialize packet: %s", string(error.c_str())),
+                                       5000);
                         continue;
                     }
 

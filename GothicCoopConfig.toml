@@ -77,6 +77,19 @@ playersDamageMultiplier = 100
 npcsDamageMultiplier = 100
 
 # ============================================================================
+# LOGGING SETTINGS
+# ============================================================================
+[logging]
+# Log level: trace, debug, info, warn, error, critical, off
+level = "info"
+
+# Log file path. Relative paths are resolved against the Gothic folder.
+filePath = "GothicCoopLog.log"
+
+# Also write logs to the console when available.
+console = false
+
+# ============================================================================
 # KEY BINDINGS
 # ============================================================================
 [controls]

@@ -56,7 +56,7 @@ namespace GOTHIC_ENGINE {
                         if (InetNtopW(AF_INET, (struct in_addr*)*hostinfo->h_addr_list, ip, sizeof(ip)) != NULL) {
                             if (spmCol->Add(lPort, protocol, lPort, ip, TRUE, description, &spmOut) == S_OK) {
                                 mapped_ = true;
-                                ChatLog("(Server) UPnP port was added successfully.");
+                                LogMessage(spdlog::level::info, "(Server) UPnP port was added successfully.");
                             }
                         }
                     }
