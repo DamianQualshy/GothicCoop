@@ -5,10 +5,19 @@
 #include <mutex>
 #include <vector>
 
+#ifdef next_state
+#pragma push_macro("next_state")
+#undef next_state
+#define GOTHICCOOP_RESTORE_NEXT_STATE_SINKS
+#endif
+
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include "Logging.h"
+#ifdef GOTHICCOOP_RESTORE_NEXT_STATE_SINKS
+#pragma pop_macro("next_state")
+#undef GOTHICCOOP_RESTORE_NEXT_STATE_SINKS
+#endif
 
 namespace GOTHIC_ENGINE {
     namespace {
@@ -20,16 +29,20 @@ namespace GOTHIC_ENGINE {
         std::mutex g_logMutex;
         std::map<std::string, RateLimitState> g_rateLimits;
 
-        std::string ToLower(std::string value) {
+        std::string LoggingToLower(std::string value) {
             std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
                 return static_cast<char>(std::tolower(ch));
             });
             return value;
         }
+
+        std::string ToStdString(const Common::CStringA& value) {
+            return std::string(static_cast<const char*>(value));
+        }
     }
 
     spdlog::level::level_enum ParseLogLevel(const std::string& level) {
-        const auto normalized = ToLower(level);
+        const auto normalized = LoggingToLower(level);
         if (normalized == "trace") {
             return spdlog::level::trace;
         }
@@ -79,6 +92,13 @@ namespace GOTHIC_ENGINE {
         logger->log(level, "{}", message);
     }
 
+    void LogMessage(spdlog::level::level_enum level, const Common::CStringA& message) {
+        LogMessage(level, ToStdString(message));
+    }
+
+    void LogMessage(spdlog::level::level_enum level, const char* message) {
+        LogMessage(level, std::string(message));
+    }
     void LogRateLimited(spdlog::level::level_enum level,
                         const std::string& key,
                         const std::string& message,
@@ -110,5 +130,19 @@ namespace GOTHIC_ENGINE {
         else {
             logger->log(level, "{}", message);
         }
+    }
+
+    void LogRateLimited(spdlog::level::level_enum level,
+                        const std::string& key,
+                        const Common::CStringA& message,
+                        long long intervalMs) {
+        LogRateLimited(level, key, ToStdString(message), intervalMs);
+    }
+
+    void LogRateLimited(spdlog::level::level_enum level,
+                        const std::string& key,
+                        const char* message,
+                        long long intervalMs) {
+        LogRateLimited(level, key, std::string(message), intervalMs);
     }
 }

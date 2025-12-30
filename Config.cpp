@@ -211,7 +211,7 @@ namespace GOTHIC_ENGINE {
             return *value;
         }
 
-        std::string ToLower(std::string value) {
+        std::string ConfigToLower(std::string value) {
             std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
                 return static_cast<char>(std::tolower(ch));
             });
@@ -467,7 +467,7 @@ namespace GOTHIC_ENGINE {
     }
 
     bool Config::IsValidLogLevel(const std::string& level) const {
-        const auto normalized = ToLower(level);
+        const auto normalized = ConfigToLower(level);
         return normalized == "trace"
             || normalized == "debug"
             || normalized == "info"
