@@ -221,6 +221,10 @@ namespace GOTHIC_ENGINE {
 
         SyncNpcs = syncPlayerNpcs;
 
+        for (auto& syncNpc : SyncNpcs) {
+            syncNpc.second->ReinitCoopFriendNpc();
+        }
+
         BroadcastNpcs.clear();
         UniqueNameToNpcList.clear();
         NpcToUniqueNameList.clear();
@@ -237,6 +241,14 @@ namespace GOTHIC_ENGINE {
         }
         else {
             CurrentWorldTOTPosition = NULL;
+        }
+
+        if (player) {
+            player->SetAdditionalVisuals(zSTRING(MyBodyModel.c_str()), MyBodyTex, MyBodyColor, zSTRING(MyHeadModel.c_str()), MyHeadTex, 0, -1);
+        }
+
+        if (Myself) {
+            Myself->Reinit();
         }
 
         IsLoadingLevel = false;
