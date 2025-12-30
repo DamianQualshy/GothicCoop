@@ -37,8 +37,8 @@ namespace GOTHIC_ENGINE {
     int ReinitPlayersKey;
     int RevivePlayerKey;
 
-    string MyBodyModel = "HUM_BODY_NAKED0";
-    string MyHeadModel = "HUM_HEAD_PONY";
+    std::string MyBodyModel = "HUM_BODY_NAKED0";
+    std::string MyHeadModel = "HUM_HEAD_PONY";
 #if ENGINE >= Engine_G2
     int MyBodyTex = 9;
     int MyHeadTex = 18;
