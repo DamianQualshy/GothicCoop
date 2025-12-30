@@ -137,7 +137,7 @@ namespace GOTHIC_ENGINE {
         hit.damage = static_cast<float>(LastHpBeforeDamage - _this->GetAttribute(NPC_ATR_HITPOINTS));
         hit.attacker = damdesc.pNpcAttacker;
         hit.npc = _this;
-        hit.isDead = _this->IsDead();
+        hit.isDead = IsNpcDead(_this);
         hit.isUnconscious = _this->IsUnconscious();
         hit.isFinish = false;
         hit.damageMode = damdesc.enuModeDamage;
@@ -207,7 +207,7 @@ namespace GOTHIC_ENGINE {
             return 0;
         }
 
-        if (focusedNpc->IsDead() || focusedNpc->IsUnconscious() || focusedNpc->GetWeaponMode() != NPC_WEAPON_NONE) {
+        if (IsNpcDead(focusedNpc) || focusedNpc->IsUnconscious() || focusedNpc->GetWeaponMode() != NPC_WEAPON_NONE) {
             return Ivk_oCAIHuman_StandActions(_this);
         }
 
@@ -415,7 +415,7 @@ namespace GOTHIC_ENGINE {
         }
 
         auto npc = (oCNpc*)_this->homeVob;
-        if (ClientThread && npc && npc->IsDead()) {
+        if (ClientThread && npc && IsNpcDead(npc)) {
             Ivk_zCModel_StartAni(_this, a, b);
             return;
         }
@@ -516,7 +516,7 @@ namespace GOTHIC_ENGINE {
                 auto bodyState = _this->GetBodyState();
                 bool isDropBodyState = bodyState == BS_DROPITEM || bodyState == BS_THROWITEM;
                 if (pItem->GetHomeWorld()
-                    && !_this->IsDead()
+                    && !IsNpcDead(_this)
                     && !_this->IsUnconscious()
                     && _this->GetBodyState() != BS_DEAD
                     && _this->GetBodyState() != BS_UNCONSCIOUS

@@ -1,4 +1,12 @@
 namespace GOTHIC_ENGINE {
+    float GetVec3LengthApprox(const zVEC3& vec) {
+    #ifdef __G1A
+            return vec.Length();
+    #else
+            return vec.LengthApprox();
+    #endif
+    }
+
     class RemoteNpc
     {
     public:
@@ -270,7 +278,7 @@ namespace GOTHIC_ENGINE {
 
             if (!IsCoopPlayer(name) && hp == 0) {
                 if (hasNpc) {
-                    if (!npc->IsDead() && KilledByPlayerNpcNames.count(name) == 0) {
+                    if (!IsNpcDead(npc) && KilledByPlayerNpcNames.count(name) == 0) {
                         npc->SetAttribute(NPC_ATR_HITPOINTS, 1);
                     } else {
                         npc->SetAttribute(NPC_ATR_HITPOINTS, 0);
@@ -728,7 +736,7 @@ namespace GOTHIC_ENGINE {
         void UpdateRevived(const PlayerStateUpdatePacket& update) {
             auto name = update.revived.name;
 
-            if (player->IsDead() && name.compare(MyselfId) == 0) {
+            if (IsNpcDead(player) && name.compare(MyselfId) == 0) {
                 player->StopFaceAni("T_HURT");
                 player->SetWeaponMode2(NPC_WEAPON_NONE);
                 player->ResetPos(player->GetPositionWorld());
@@ -820,7 +828,7 @@ namespace GOTHIC_ENGINE {
                 }
 
                 if (lastHpFromServer != -1 && lastHpFromServer != npc->GetAttribute(NPC_ATR_HITPOINTS)) {
-                    if (!npc->IsDead() || IsCoopPlayer(name)) {
+                    if (!IsNpcDead(npc) || IsCoopPlayer(name)) {
                         npc->SetAttribute(NPC_ATR_HITPOINTS, lastHpFromServer);
                     }
                 }
@@ -843,7 +851,7 @@ namespace GOTHIC_ENGINE {
 
         void UpdateNpcPosition() {
             auto currentPosition = npc->GetPositionWorld();
-            auto dist = (int)(*lastPositionFromServer - currentPosition).LengthApprox();
+            auto dist = static_cast<int>(GetVec3LengthApprox(*lastPositionFromServer - currentPosition));
             auto pos = *lastPositionFromServer;
 
             if (dist < 200) {
@@ -856,7 +864,7 @@ namespace GOTHIC_ENGINE {
 
             bool inMove = npc->isInMovementMode;
             if (inMove) {
-#if ENGINE >= Engine_G2
+#ifdef __G2A
                 npc->EndMovement(false);
 #else
                 npc->EndMovement();
@@ -997,7 +1005,7 @@ namespace GOTHIC_ENGINE {
 
         void RespawnOrDestroyBasedOnDistance() {
             if (hasNpc && lastPositionFromServer) {
-                float dist = (*lastPositionFromServer - player->GetPositionWorld()).LengthApprox();
+                float dist = GetVec3LengthApprox(*lastPositionFromServer - player->GetPositionWorld());
 
                 if (IsCoopPlayer(name)) {
                     if (dist > BROADCAST_DISTANCE && isSpawned) {

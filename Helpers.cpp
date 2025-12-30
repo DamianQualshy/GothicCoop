@@ -35,6 +35,17 @@ namespace GOTHIC_ENGINE {
         return name == "HOST" || name.StartWith("FRIEND_");
     }
 
+    bool IsNpcDead(oCNpc* npc) {
+        if (!npc) {
+            return false;
+        }
+    #ifdef __G2
+            return npc->GetAttribute(NPC_ATR_HITPOINTS) <= 0;
+    #else
+            return npc->IsDead();
+    #endif
+    }
+
     oCItem* CreateCoopItem(int insIndex) {
         return zfactory->CreateItem(insIndex);
     }

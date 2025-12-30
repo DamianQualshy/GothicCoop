@@ -11,7 +11,7 @@ namespace GOTHIC_ENGINE {
         }
 
         if (ReviveStartTime + 10000 < CurrentMs && ReviveState.Compare("HEALING")) {
-            if (player->IsDead() || player->IsUnconscious()) {
+            if (IsNpcDead(player) || player->IsUnconscious()) {
                 ReviveStartTime = 0;
                 ReviveState = "READY";
                 return;

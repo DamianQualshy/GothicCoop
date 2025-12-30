@@ -20,7 +20,7 @@ namespace GOTHIC_ENGINE {
 
             hit.npcUniqueName = NpcToUniqueNameList[hit.npc];
 
-            if (hit.npc->IsDead()) {
+            if (IsNpcDead(hit.npc)) {
                 KilledByPlayerNpcNames[hit.npcUniqueName] = hit.npc;
             }
 
