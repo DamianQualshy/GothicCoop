@@ -390,8 +390,9 @@ namespace GOTHIC_ENGINE {
                     auto selectedSpell = book->GetSelectedSpell();
                     if (selectedSpell) {
                         auto selectedSpellItem = book->GetSpellItem(selectedSpell);
-                        npc->DoDropVob(selectedSpellItem);
-                        selectedSpellItem->RemoveVobFromWorld();
+                        if (selectedSpellItem) {
+                            selectedSpellItem->RemoveVobFromWorld();
+                        }
                         selectedSpell->Kill();
                     }
 
@@ -441,7 +442,6 @@ namespace GOTHIC_ENGINE {
             if (selectedSpell) {
                 auto selectedSpellItem = book->GetSpellItem(selectedSpell);
                 if (selectedSpellItem) {
-                    npc->DoDropVob(selectedSpellItem);
                     selectedSpellItem->RemoveVobFromWorld();
                 }
                 selectedSpell->Kill();
@@ -472,7 +472,7 @@ namespace GOTHIC_ENGINE {
             auto leftHandItem = npc->GetLeftHand();
             if (leftHandItem)
             {
-                npc->DoDropVob(leftHandItem);
+                npc->SetLeftHand(nullptr);
                 leftHandItem->RemoveVobFromWorld();
                 syncedNpcItems.erase(leftHandItem);
             }
@@ -491,7 +491,7 @@ namespace GOTHIC_ENGINE {
             auto rightHandItem = npc->GetRightHand();
             if (rightHandItem)
             {
-                npc->DoDropVob(rightHandItem);
+                npc->SetRightHand(nullptr);
                 rightHandItem->RemoveVobFromWorld();
                 syncedNpcItems.erase(rightHandItem);
             }
@@ -518,11 +518,15 @@ namespace GOTHIC_ENGINE {
 
                 if (currentWeapon1) {
                     npc->UnequipItem(currentWeapon1);
+                    currentWeapon1->RemoveVobFromWorld();
+                    syncedNpcItems.erase(currentWeapon1);
                     lastWeapon1 = -1;
                 }
 
                 if (currentWeapon2) {
                     npc->UnequipItem(currentWeapon2);
+                    currentWeapon2->RemoveVobFromWorld();
+                    syncedNpcItems.erase(currentWeapon2);
                     lastWeapon2 = -1;
                 }
 
