@@ -1,8 +1,20 @@
 namespace GOTHIC_ENGINE {
-    int CoopServerThread()
+    DWORD WINAPI CoopServerThread(void*)
     {
+        struct ThreadExitReset {
+            Thread** slot;
+            explicit ThreadExitReset(Thread** target) : slot(target) {}
+            ~ThreadExitReset() {
+                if (slot) {
+                    *slot = NULL;
+                }
+            }
+        } resetServerThread(&ServerThread);
+
+        CoopLog("[Server] Thread entry.");
         if (enet_initialize() != 0)
         {
+            CoopLog("[Server] ENet init failed.");
             ChatLog("An error occurred while initializing ENet.");
             return EXIT_FAILURE;
         }
@@ -15,10 +27,12 @@ namespace GOTHIC_ENGINE {
         server = enet_host_create(&address, 32, 2, 0, 0);
         if (server == NULL)
         {
+            CoopLog("[Server] ENet host create failed.");
             ChatLog("An error occurred while trying to create an ENet server host.");
             return EXIT_FAILURE;
         }
 
+        CoopLog("[Server] ENet host created.");
         ChatLog(string::Combine("(Server) Ready (v. %i, port %i).", COOP_VERSION, address.port));
         while (true) {
             try {

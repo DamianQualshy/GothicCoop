@@ -99,11 +99,11 @@ namespace GOTHIC_ENGINE {
     };
 
     bool IsPlayerTalkingWithAnybody() {
-        return ogame->GetCameraAI()->GetMode().Compare("CAMMODDIALOG") == 0;
+        return ogame->GetCameraAI()->GetMode().Compare("CAMMODDIALOG");
     }
 
     bool IsPlayerTalkingWithNpc(zCVob* npc) {
-        if (ogame->GetCameraAI()->GetMode().Compare("CAMMODDIALOG") != 0) {
+        if (!ogame->GetCameraAI()->GetMode().Compare("CAMMODDIALOG")) {
             return false;
         }
 

@@ -120,27 +120,41 @@ namespace GOTHIC_ENGINE {
 
         PluginState = "KeysPressedChecks";
         if (!IsPlayerTalkingWithAnybody()) {
-            if (zinput->KeyToggled(StartServerKey) && !ServerThread && !ClientThread) {
-                wchar_t mappedPort[1234];
-                std::wcsncpy(mappedPort, L"UDP", 1234);
-                new MappedPort(ConnectionPort, mappedPort, mappedPort);
+            if (zinput->KeyToggled(StartServerKey)) {
+                if (ServerThread || ClientThread) {
+                    CoopLog("[Server] Start key pressed but server/client already running.\r\n");
+                    ChatLog("(Server) Already running.");
+                }
+                else {
+                    CoopLog("[Server] Start key pressed. Initializing server thread.\r\n");
+                    ChatLog("(Server) Starting...");
+                    wchar_t mappedPort[1234];
+                    std::wcsncpy(mappedPort, L"UDP", 1234);
+                    new MappedPort(ConnectionPort, mappedPort, mappedPort);
 
-                Thread t;
-                t.Init(&CoopServerThread);
-                t.Detach();
-                ServerThread = &t;
-                MyselfId = "HOST";
-                player->SetAdditionalVisuals(zSTRING(MyBodyModel.c_str()), MyBodyTex, MyBodyColor, zSTRING(MyHeadModel.c_str()), MyHeadTex, 0, -1);
+                    ServerThreadStorage.Init(&CoopServerThread);
+                    ServerThreadStorage.Detach();
+                    ServerThread = &ServerThreadStorage;
+                    CoopLog("[Server] Server thread started.\r\n");
+                    MyselfId = "HOST";
+                    player->SetAdditionalVisuals(zSTRING(MyBodyModel.c_str()), MyBodyTex, MyBodyColor, zSTRING(MyHeadModel.c_str()), MyHeadTex, 0, -1);
+                }
             }
 
-            if (zinput->KeyToggled(StartConnectionKey) && !ServerThread) {
-                if (!ClientThread) {
+            if (zinput->KeyToggled(StartConnectionKey)) {
+                if (ServerThread) {
+                    CoopLog("[Client] Connect key pressed but server is running.\r\n");
+                    ChatLog("(Client) Cannot connect while hosting.");
+                }
+                else if (!ClientThread) {
+                    CoopLog("[Client] Connect key pressed. Initializing client thread.\r\n");
+                    ChatLog("(Client) Connecting...");
                     addSyncedNpc("HOST");
 
-                    Thread  t;
-                    t.Init(&CoopClientThread);
-                    t.Detach();
-                    ClientThread = &t;
+                    ClientThreadStorage.Init(&CoopClientThread);
+                    ClientThreadStorage.Detach();
+                    ClientThread = &ClientThreadStorage;
+                    CoopLog("[Client] Client thread started.\r\n");
 
                     ogame->SetTime(ogame->GetWorldTimer()->GetDay(), 12, 00);
                     rtnMan->RestartRoutines();
@@ -170,11 +184,12 @@ namespace GOTHIC_ENGINE {
                     }
                 }
             }
-        }
 
-        if ((ClientThread || ServerThread) && !Myself) {
-            PluginState = "Myself_Init";
-            Myself = new LocalNpc(player, MyselfId);
+            if ((ClientThread || ServerThread) && !Myself) {
+                PluginState = "Myself_Init";
+                Myself = new LocalNpc(player, MyselfId);
+            }
+
         }
 
         PluginState = "GameLoop_End";

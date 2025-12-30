@@ -36,7 +36,8 @@ friendInstance = "CH"
 # Body model filename (without extension)
 # Available options:
 # "HUM_BODY_NAKED0" for Male
-# "HUM_BODY_BABE0" for Female
+# "HUM_BODY_BABE0" for Female (Gothic 2 only)
+# It's not recommended to try to apply babe model in Gothic 1 because it has limited animations and will not allow for proper gameplay.
 bodyModel = "HUM_BODY_NAKED0"
 
 # Body texture number

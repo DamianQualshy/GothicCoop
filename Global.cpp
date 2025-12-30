@@ -51,6 +51,8 @@ namespace GOTHIC_ENGINE {
 
     int ConnectionPort = 1234;
 
+    static Thread ServerThreadStorage;
+    static Thread ClientThreadStorage;
     static Thread* ServerThread = NULL;
     static Thread* ClientThread = NULL;
 
