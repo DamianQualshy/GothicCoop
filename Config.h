@@ -50,6 +50,7 @@ namespace GOTHIC_ENGINE {
             int skinColor = 0;
             int playersDamageMultiplier = 0;
             int npcsDamageMultiplier = 0;
+            int startupGuardMs = 0;
             std::string toggleGameLogKey;
             std::string toggleGameStatsKey;
             std::string startServerKey;
@@ -73,6 +74,7 @@ namespace GOTHIC_ENGINE {
         int BodyColor() const;
         int PlayersDamageMultiplier() const;
         int NpcsDamageMultiplier() const;
+        int StartupGuardMs() const;
 
         int ToggleGameLogKeyCode() const;
         int ToggleGameStatsKeyCode() const;

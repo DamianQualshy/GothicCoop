@@ -10,6 +10,7 @@ namespace GOTHIC_ENGINE {
         const char* kDefaultFriendInstance = "CH";
         const int kDefaultPlayersDamageMultiplier = 50;
         const int kDefaultNpcsDamageMultiplier = 100;
+        const int kDefaultStartupGuardMs = 2000;
         const char* kDefaultBodyModel = "HUM_BODY_NAKED0";
         const char* kDefaultHeadModel = "HUM_HEAD_PONY";
 
@@ -40,6 +41,8 @@ namespace GOTHIC_ENGINE {
         const int kSkinColorMax = 3;
         const int kDamageMultiplierMin = 0;
         const int kDamageMultiplierMax = 500;
+        const int kStartupGuardMin = 0;
+        const int kStartupGuardMax = 10000;
 
         const toml::node* FindNode(const toml::table& table, const char* section, const char* key) {
             if (section && section[0] != '\0') {
@@ -200,6 +203,7 @@ namespace GOTHIC_ENGINE {
         defaults.skinColor = kDefaultBodyColor;
         defaults.playersDamageMultiplier = kDefaultPlayersDamageMultiplier;
         defaults.npcsDamageMultiplier = kDefaultNpcsDamageMultiplier;
+        defaults.startupGuardMs = kDefaultStartupGuardMs;
         defaults.toggleGameLogKey = kDefaultToggleGameLogKey;
         defaults.toggleGameStatsKey = kDefaultToggleGameStatsKey;
         defaults.startServerKey = kDefaultStartServerKey;
@@ -252,9 +256,9 @@ namespace GOTHIC_ENGINE {
         values_.skinColor = ReadInt(config, "appearance", "skinColorG1", values_.skinColor, kSkinColorMin, kSkinColorMax, false, &needsPersist, logIssue);
         values_.playersDamageMultiplier = ReadInt(config, "gameplay", "playersDamageMultiplier", values_.playersDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
         values_.npcsDamageMultiplier = ReadInt(config, "gameplay", "npcsDamageMultiplier", values_.npcsDamageMultiplier, kDamageMultiplierMin, kDamageMultiplierMax, false, &needsPersist, logIssue);
+        values_.startupGuardMs = ReadInt(config, "gameplay", "startupGuardMs", values_.startupGuardMs, kStartupGuardMin, kStartupGuardMax, false, &needsPersist, logIssue);
 
         auto isValidKey = [this](const std::string& keyValue) { return IsValidKeyCode(keyValue); };
-
         values_.toggleGameLogKey = ReadKeyString(config, "toggleGameLogKey", values_.toggleGameLogKey, &needsPersist, logIssue, isValidKey);
         values_.toggleGameStatsKey = ReadKeyString(config, "toggleGameStatsKey", values_.toggleGameStatsKey, &needsPersist, logIssue, isValidKey);
         values_.startServerKey = ReadKeyString(config, "startServerKey", values_.startServerKey, &needsPersist, logIssue, isValidKey);
@@ -313,6 +317,10 @@ namespace GOTHIC_ENGINE {
         return values_.npcsDamageMultiplier;
     }
 
+    int Config::StartupGuardMs() const {
+        return values_.startupGuardMs;
+    }
+
     int Config::ToggleGameLogKeyCode() const {
         return ToKeyCode(values_.toggleGameLogKey, kDefaultToggleGameLogKey);
     }
@@ -356,7 +364,8 @@ namespace GOTHIC_ENGINE {
         });
         config.insert("gameplay", toml::table{
             {"playersDamageMultiplier", values_.playersDamageMultiplier},
-            {"npcsDamageMultiplier", values_.npcsDamageMultiplier}
+            {"npcsDamageMultiplier", values_.npcsDamageMultiplier},
+            {"startupGuardMs", values_.startupGuardMs}
         });
         config.insert("controls", toml::table{
             {"toggleGameLogKey", values_.toggleGameLogKey},

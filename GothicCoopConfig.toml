@@ -77,6 +77,10 @@ playersDamageMultiplier = 100
 # 100 = normal damage, 50 = half damage, 200 = double damage
 npcsDamageMultiplier = 100
 
+# Grace period after loading ends during which start/connect requests are ignored (milliseconds)
+# Valid range: 0-10000
+startupGuardMs = 2000
+
 # ============================================================================
 # KEY BINDINGS
 # ============================================================================

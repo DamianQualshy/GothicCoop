@@ -16,6 +16,7 @@ namespace GOTHIC_ENGINE {
     static LocalNpc* Myself = NULL;
     std::set<int> ActiveFriendIds;
     long long CurrentMs = 0;
+    long long LastLoadEndMs = 0;
     Config CoopConfig;
     static bool IsLoadingLevel = false;
     static bool IsSavingGame = false;
@@ -36,6 +37,7 @@ namespace GOTHIC_ENGINE {
     int StartConnectionKey;
     int ReinitPlayersKey;
     int RevivePlayerKey;
+    int StartupGuardMs = 2000;
 
     std::string MyBodyModel = "HUM_BODY_NAKED0";
     std::string MyHeadModel = "HUM_HEAD_PONY";

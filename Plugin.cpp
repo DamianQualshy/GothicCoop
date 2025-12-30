@@ -1,4 +1,5 @@
 ﻿#include "resource.h"
+#include <sstream>
 
 namespace GOTHIC_ENGINE {
     void Game_Entry() {
@@ -27,6 +28,7 @@ namespace GOTHIC_ENGINE {
         StartConnectionKey = CoopConfig.StartConnectionKeyCode();
         ReinitPlayersKey = CoopConfig.ReinitPlayersKeyCode();
         RevivePlayerKey = CoopConfig.RevivePlayerKeyCode();
+        StartupGuardMs = CoopConfig.StartupGuardMs();
 
         ConnectionPort = CoopConfig.ConnectionPort();
         MyBodyModel = CoopConfig.BodyModel();
@@ -120,8 +122,23 @@ namespace GOTHIC_ENGINE {
 
         PluginState = "KeysPressedChecks";
         if (!IsPlayerTalkingWithAnybody()) {
+            bool startupGuardActive = StartupGuardMs > 0 && LastLoadEndMs > 0 && CurrentMs < LastLoadEndMs + StartupGuardMs;
+            auto logStartupGuardBlocked = [&](const char* action, const char* chatMessage) {
+                long long remainingMs = LastLoadEndMs + StartupGuardMs - CurrentMs;
+                if (remainingMs < 0) {
+                    remainingMs = 0;
+                }
+                std::ostringstream message;
+                message << "[StartupGuard] " << action << " blocked for " << remainingMs << " ms after load end.\r\n";
+                CoopLog(message.str());
+                ChatLog(string(chatMessage));
+            };
+
             if (zinput->KeyToggled(StartServerKey)) {
-                if (ServerThread || ClientThread) {
+                if (startupGuardActive) {
+                    logStartupGuardBlocked("Server start request", "(Server) Start blocked during startup guard.");
+                }
+                else if (ServerThread || ClientThread) {
                     CoopLog("[Server] Start key pressed but server/client already running.\r\n");
                     ChatLog("(Server) Already running.");
                 }
@@ -142,7 +159,10 @@ namespace GOTHIC_ENGINE {
             }
 
             if (zinput->KeyToggled(StartConnectionKey)) {
-                if (ServerThread) {
+                if (startupGuardActive) {
+                    logStartupGuardBlocked("Client start request", "(Client) Start blocked during startup guard.");
+                }
+                else if (ServerThread) {
                     CoopLog("[Client] Connect key pressed but server is running.\r\n");
                     ChatLog("(Client) Cannot connect while hosting.");
                 }
@@ -267,6 +287,7 @@ namespace GOTHIC_ENGINE {
         }
 
         IsLoadingLevel = false;
+        LastLoadEndMs = GetCurrentMs();
     }
 
     void Game_LoadEnd_SaveGame() {
